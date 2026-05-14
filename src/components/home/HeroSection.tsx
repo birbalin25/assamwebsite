@@ -51,6 +51,11 @@ export function HeroSection() {
   useEffect(() => {
     let cancelled = false;
 
+    // Show fallback content after 3 seconds if data hasn't loaded
+    const timeout = setTimeout(() => {
+      if (!cancelled) setIsLoading(false);
+    }, 3000);
+
     async function loadData() {
       try {
         const [banners, config] = await Promise.all([
@@ -81,12 +86,13 @@ export function HeroSection() {
       } catch (err) {
         console.error('Failed to load banners:', err);
       } finally {
+        clearTimeout(timeout);
         if (!cancelled) setIsLoading(false);
       }
     }
 
     loadData();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(timeout); };
   }, []);
 
   useEffect(() => {
