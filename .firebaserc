@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "assam-in-dallas"
+  },
+  "targets": {
+    "assam-in-dallas": {
+      "storage": {
+        "default": [
+          "assam-in-dallas.firebasestorage.app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

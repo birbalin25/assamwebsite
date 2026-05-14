@@ -1,26 +1,167 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Gamosa Red - iconic Assamese towel */
+  --color-gamosa-50: #FEF2F4;
+  --color-gamosa-100: #FDE6E9;
+  --color-gamosa-200: #FBC1C9;
+  --color-gamosa-300: #F89BAA;
+  --color-gamosa-400: #E84566;
+  --color-gamosa-500: #C41E3A;
+  --color-gamosa-600: #A81832;
+  --color-gamosa-700: #8C142A;
+  --color-gamosa-800: #701021;
+  --color-gamosa-900: #5C0D1B;
+
+  /* Muga Silk Gold - Assam's prized golden silk */
+  --color-muga-50: #FFFDF0;
+  --color-muga-100: #FFF9D6;
+  --color-muga-200: #FFF0A8;
+  --color-muga-300: #FFE47A;
+  --color-muga-400: #F0C430;
+  --color-muga-500: #D4A017;
+  --color-muga-600: #B88A13;
+  --color-muga-700: #9A7310;
+  --color-muga-800: #7D5D0D;
+  --color-muga-900: #664C0A;
+
+  /* Tea Garden Green - Assam's lush tea estates */
+  --color-tea-50: #ECFDF5;
+  --color-tea-100: #D1FAE5;
+  --color-tea-200: #A7F3D0;
+  --color-tea-300: #6EE7B7;
+  --color-tea-400: #34D399;
+  --color-tea-500: #2D6A4F;
+  --color-tea-600: #256B4A;
+  --color-tea-700: #1E5A3E;
+  --color-tea-800: #174A33;
+  --color-tea-900: #113B29;
+
+  /* Earth tones - Rang Ghar inspired */
+  --color-earth-50: #FDFBF7;
+  --color-earth-100: #F7F2E8;
+  --color-earth-200: #EDE5D3;
+  --color-earth-300: #DDD0B8;
+  --color-earth-400: #C4AD8A;
+  --color-earth-500: #A08A65;
+  --color-earth-600: #7D6B4E;
+  --color-earth-700: #5E5039;
+  --color-earth-800: #342A20;
+  --color-earth-900: #1E1812;
+
+  /* Typography */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-assamese: 'Noto Sans Assamese', sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Base styles */
+body {
+  background-color: var(--color-earth-50);
+  color: var(--color-earth-800);
+  font-family: var(--font-body);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-earth-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-earth-400);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-earth-500);
+}
+
+/* Gamosa border pattern */
+.gamosa-border {
+  border-image: repeating-linear-gradient(
+    90deg,
+    var(--color-gamosa-500) 0px,
+    var(--color-gamosa-500) 12px,
+    transparent 12px,
+    transparent 18px,
+    var(--color-muga-500) 18px,
+    var(--color-muga-500) 30px,
+    transparent 30px,
+    transparent 36px
+  ) 4;
+  border-width: 4px;
+  border-style: solid;
+}
+
+.gamosa-border-top {
+  border-image: repeating-linear-gradient(
+    90deg,
+    var(--color-gamosa-500) 0px,
+    var(--color-gamosa-500) 12px,
+    transparent 12px,
+    transparent 18px,
+    var(--color-muga-500) 18px,
+    var(--color-muga-500) 30px,
+    transparent 30px,
+    transparent 36px
+  ) 4;
+  border-width: 4px 0 0 0;
+  border-style: solid;
+}
+
+/* Muga silk texture overlay */
+.muga-texture {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4A017' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Animation utilities */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes counter {
+  from { --num: 0; }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(253, 251, 247, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--color-gamosa-500);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-muga-200);
+  color: var(--color-earth-800);
 }
