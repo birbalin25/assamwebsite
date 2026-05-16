@@ -29,6 +29,11 @@ type BannerFormData = {
   titleOffsetLeft: number;
   descOffsetTop: number;
   descOffsetLeft: number;
+  dividerOffsetTop: number;
+  dividerOffsetLeft: number;
+  showTitle: boolean;
+  showDescription: boolean;
+  showDivider: boolean;
 };
 
 const emptyForm: BannerFormData = {
@@ -44,6 +49,11 @@ const emptyForm: BannerFormData = {
   titleOffsetLeft: 0,
   descOffsetTop: 0,
   descOffsetLeft: 0,
+  dividerOffsetTop: 0,
+  dividerOffsetLeft: 0,
+  showTitle: true,
+  showDescription: true,
+  showDivider: true,
 };
 
 export default function AdminBannersPage() {
@@ -104,6 +114,11 @@ export default function AdminBannersPage() {
       titleOffsetLeft: banner.titleOffset?.left ?? 0,
       descOffsetTop: banner.descriptionOffset?.top ?? 0,
       descOffsetLeft: banner.descriptionOffset?.left ?? 0,
+      dividerOffsetTop: banner.dividerOffset?.top ?? 0,
+      dividerOffsetLeft: banner.dividerOffset?.left ?? 0,
+      showTitle: banner.showTitle !== false,
+      showDescription: banner.showDescription !== false,
+      showDivider: banner.showDivider !== false,
     });
     setShowForm(true);
   };
@@ -136,6 +151,9 @@ export default function AdminBannersPage() {
       const descriptionOffset = (form.descOffsetTop || form.descOffsetLeft)
         ? { top: form.descOffsetTop || undefined, left: form.descOffsetLeft || undefined }
         : undefined;
+      const dividerOffset = (form.dividerOffsetTop || form.dividerOffsetLeft)
+        ? { top: form.dividerOffsetTop || undefined, left: form.dividerOffsetLeft || undefined }
+        : undefined;
 
       const payload: Omit<Banner, 'createdAt' | 'updatedAt'> = {
         title: form.title.trim(),
@@ -146,6 +164,10 @@ export default function AdminBannersPage() {
         ctaLink: form.ctaLink.trim() || undefined,
         titleOffset,
         descriptionOffset,
+        dividerOffset,
+        showTitle: form.showTitle,
+        showDescription: form.showDescription,
+        showDivider: form.showDivider,
         order: form.order,
         isActive: form.isActive,
       };
@@ -316,6 +338,23 @@ export default function AdminBannersPage() {
               placeholder="e.g. /events"
             />
             <div className="md:col-span-2 border-t border-earth-200 pt-4 mt-2">
+              <p className="text-sm font-medium text-earth-700 mb-3">Visibility</p>
+              <div className="flex flex-wrap gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.showTitle} onChange={e => setForm(f => ({ ...f, showTitle: e.target.checked }))} className="h-4 w-4 rounded border-earth-300 text-gamosa-500 focus:ring-gamosa-500" />
+                  <span className="text-sm text-earth-700">Show Title</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.showDivider} onChange={e => setForm(f => ({ ...f, showDivider: e.target.checked }))} className="h-4 w-4 rounded border-earth-300 text-gamosa-500 focus:ring-gamosa-500" />
+                  <span className="text-sm text-earth-700">Show Divider Line</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.showDescription} onChange={e => setForm(f => ({ ...f, showDescription: e.target.checked }))} className="h-4 w-4 rounded border-earth-300 text-gamosa-500 focus:ring-gamosa-500" />
+                  <span className="text-sm text-earth-700">Show Description</span>
+                </label>
+              </div>
+            </div>
+            <div className="md:col-span-2 border-t border-earth-200 pt-4 mt-2">
               <p className="text-sm font-medium text-earth-700 mb-3">Title Position Offset (inches)</p>
               <div className="grid grid-cols-2 gap-4">
                 <Input
@@ -349,6 +388,25 @@ export default function AdminBannersPage() {
                   type="number"
                   value={form.descOffsetLeft}
                   onChange={e => setForm(f => ({ ...f, descOffsetLeft: parseFloat(e.target.value) || 0 }))}
+                  helperText="Positive = right, Negative = left"
+                />
+              </div>
+            </div>
+            <div className="md:col-span-2 border-t border-earth-200 pt-4">
+              <p className="text-sm font-medium text-earth-700 mb-3">Divider Line Position Offset (inches)</p>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Up/Down"
+                  type="number"
+                  value={form.dividerOffsetTop}
+                  onChange={e => setForm(f => ({ ...f, dividerOffsetTop: parseFloat(e.target.value) || 0 }))}
+                  helperText="Positive = down, Negative = up"
+                />
+                <Input
+                  label="Left/Right"
+                  type="number"
+                  value={form.dividerOffsetLeft}
+                  onChange={e => setForm(f => ({ ...f, dividerOffsetLeft: parseFloat(e.target.value) || 0 }))}
                   helperText="Positive = right, Negative = left"
                 />
               </div>

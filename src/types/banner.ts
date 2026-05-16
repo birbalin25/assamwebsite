@@ -17,6 +17,10 @@ export interface Banner {
   ctaLink?: string;
   titleOffset?: BannerOffset;
   descriptionOffset?: BannerOffset;
+  dividerOffset?: BannerOffset;
+  showTitle?: boolean;
+  showDescription?: boolean;
+  showDivider?: boolean;
   isActive: boolean;
   order: number;
   createdAt: Timestamp;
