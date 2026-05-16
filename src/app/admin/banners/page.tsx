@@ -53,7 +53,7 @@ const emptyForm: BannerFormData = {
   dividerOffsetLeft: 0,
   showTitle: true,
   showDescription: true,
-  showDivider: true,
+  showDivider: false,
 };
 
 export default function AdminBannersPage() {
@@ -118,7 +118,7 @@ export default function AdminBannersPage() {
       dividerOffsetLeft: banner.dividerOffset?.left ?? 0,
       showTitle: banner.showTitle !== false,
       showDescription: banner.showDescription !== false,
-      showDivider: banner.showDivider !== false,
+      showDivider: banner.showDivider === true,
     });
     setShowForm(true);
   };
