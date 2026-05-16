@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { getAnnouncementById, updateAnnouncement } from '@/lib/services/announcements';
 import { slugify } from '@/lib/utils/slugify';
@@ -26,6 +27,7 @@ export default function EditAnnouncementPage() {
   const [content, setContent] = useState('');
   const [isPinned, setIsPinned] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -138,10 +140,19 @@ export default function EditAnnouncementPage() {
           </div>
         </Card>
         <div className="flex gap-3">
-          <Button onClick={handleSave} isLoading={saving}>Update Announcement</Button>
+          <Button onClick={() => setShowSaveConfirm(true)} isLoading={saving}>Update Announcement</Button>
           <Button variant="ghost" onClick={() => router.back()}>Cancel</Button>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSave(); }}
+        title="Update Announcement"
+        message="Are you sure you want to update this announcement?"
+        confirmLabel="Update"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 import { Input } from '@/components/ui/Input';
 import { FileUploadField } from '@/components/admin/FileUploadField';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getAllAlbums, createAlbum, updateAlbum, deleteAlbum } from '@/lib/services/albums';
 import { slugify } from '@/lib/utils/slugify';
 import { toast } from 'sonner';
@@ -36,6 +38,8 @@ export default function AdminAlbumsPage() {
   const [albums, setAlbums] = useState<WithId<Album>[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,7 +60,6 @@ export default function AdminAlbumsPage() {
   useEffect(() => { fetchAlbums(); }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this album?')) return;
     setDeleting(id);
     try {
       await deleteAlbum(id);
@@ -66,6 +69,7 @@ export default function AdminAlbumsPage() {
       toast.error('Failed to delete album.');
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -187,13 +191,7 @@ export default function AdminAlbumsPage() {
             </div>
             <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-earth-700 mb-1.5">Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Optional album description..."
-                rows={3}
-                className="block w-full rounded-lg border border-earth-300 px-3.5 py-2.5 text-sm text-earth-800 bg-white placeholder:text-earth-400 focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500"
-              />
+              <RichTextEditor content={form.description} onChange={(html) => setForm(prev => ({ ...prev, description: html }))} />
             </div>
             <Input
               label="Year"
@@ -226,10 +224,19 @@ export default function AdminAlbumsPage() {
           </div>
           <div className="flex justify-end gap-3 mt-6">
             <Button variant="ghost" onClick={handleCancel}>Cancel</Button>
-            <Button onClick={handleSave} isLoading={saving}>
+            <Button onClick={() => setShowSaveConfirm(true)} isLoading={saving}>
               {editingId ? 'Update Album' : 'Create Album'}
             </Button>
           </div>
+          <ConfirmDialog
+            isOpen={showSaveConfirm}
+            onClose={() => setShowSaveConfirm(false)}
+            onConfirm={() => { setShowSaveConfirm(false); handleSave(); }}
+            title={editingId ? 'Update Album' : 'Create Album'}
+            message={editingId ? 'Are you sure you want to update this album?' : 'Are you sure you want to create this album?'}
+            confirmLabel={editingId ? 'Update' : 'Create'}
+            confirmVariant="primary"
+          />
         </Card>
       )}
 
@@ -297,7 +304,7 @@ export default function AdminAlbumsPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDelete(album.id)}
+                  onClick={() => setDeleteTarget(album.id)}
                   isLoading={deleting === album.id}
                   className="text-red-500 hover:text-red-700 hover:bg-red-50"
                 >
@@ -308,6 +315,15 @@ export default function AdminAlbumsPage() {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        title="Delete Album"
+        message="Are you sure you want to delete this album? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={!!deleting}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Card } from '@/components/ui/Card';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { FileUploadField } from '@/components/admin/FileUploadField';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { createEvent } from '@/lib/services/events';
 import { slugify } from '@/lib/utils/slugify';
@@ -28,6 +29,8 @@ export default function NewEventPage() {
   const [featuredImage, setFeaturedImage] = useState('');
   const [eventType, setEventType] = useState('Rongali Bihu');
   const [customType, setCustomType] = useState('');
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -83,7 +86,7 @@ export default function NewEventPage() {
   return (
     <div>
       <h1 className="text-2xl font-heading font-bold text-earth-800 mb-6">New Event</h1>
-      <form onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={(e) => { e.preventDefault(); setShowSaveConfirm(true); }}>
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -158,6 +161,15 @@ export default function NewEventPage() {
           </div>
         </div>
       </form>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSubmit({ preventDefault: () => {}, currentTarget: formRef.current } as unknown as React.FormEvent<HTMLFormElement>); }}
+        title="Save Event"
+        message="Are you sure you want to save this event?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

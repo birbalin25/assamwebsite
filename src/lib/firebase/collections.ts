@@ -10,6 +10,7 @@ export const COLLECTIONS = {
   ANNOUNCEMENTS: 'announcements',
   DONATIONS: 'donations',
   BANNERS: 'banners',
+  DONATION_EVENTS: 'donationEvents',
   CONTACT_MESSAGES: 'contactMessages',
   SITE_CONFIG: 'siteConfig',
 } as const;

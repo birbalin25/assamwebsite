@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { createMember } from '@/lib/services/members';
 import { DESIGNATION_OPTIONS } from '@/types/member';
@@ -13,6 +14,8 @@ export default function NewMemberPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [designationMode, setDesignationMode] = useState<'preset' | 'custom'>('preset');
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +65,7 @@ export default function NewMemberPage() {
   return (
     <div>
       <h1 className="text-2xl font-heading font-bold text-earth-800 mb-6">New Member</h1>
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+      <form ref={formRef} onSubmit={(e) => { e.preventDefault(); setShowSaveConfirm(true); }} className="max-w-2xl space-y-6">
         <Card>
           <div className="space-y-4">
             <Input label="Full Name" name="name" required />
@@ -117,6 +120,15 @@ export default function NewMemberPage() {
           <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
         </div>
       </form>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSubmit({ preventDefault: () => {}, currentTarget: formRef.current } as unknown as React.FormEvent); }}
+        title="Save Member"
+        message="Are you sure you want to save this member?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

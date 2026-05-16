@@ -4,19 +4,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PerformanceGrid } from '@/components/performances/PerformanceGrid';
+import { PerformanceVideoGrid } from '@/components/performances/PerformanceVideoGrid';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { Spinner } from '@/components/ui/Spinner';
 import { getPublishedPerformances } from '@/lib/services/performances';
 import { getPublishedEvents } from '@/lib/services/events';
 import type { Performance, Event, WithId } from '@/types';
 
-const categoryFilters = [
-  { value: 'kids', label: 'Kids' },
-  { value: 'teens', label: 'Teens' },
-  { value: 'adults', label: 'Adults' },
-];
-
-// Built dynamically from event data below
+// Category filters are built dynamically from performance data below
 
 interface MappedPerformance {
   id: string;
@@ -26,6 +21,8 @@ interface MappedPerformance {
   performers: string[];
   videoUrl?: string;
   thumbnailUrl?: string;
+  galleryImages?: string[];
+  videos?: string[];
   eventName?: string;
   eventType?: string;
   eventYear?: number;
@@ -36,8 +33,10 @@ export default function PerformancesPage() {
   const [performances, setPerformances] = useState<MappedPerformance[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('');
+  const [activeMediaType, setActiveMediaType] = useState('images');
   const [activeEventType, setActiveEventType] = useState(searchParams.get('eventType') || '');
   const [activeYear, setActiveYear] = useState(searchParams.get('year') || '');
+  const [allEventTypes, setAllEventTypes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetchData() {
@@ -48,8 +47,10 @@ export default function PerformancesPage() {
         ]);
 
         const eventMap = new Map<string, { name: string; type: string }>();
+        const allEventTypes = new Set<string>();
         eventsResult.items.forEach((e: WithId<Event>) => {
           eventMap.set(e.id, { name: e.name, type: e.type });
+          allEventTypes.add(e.type);
         });
 
         const mapped = perfs.map((perf: WithId<Performance>) => {
@@ -62,12 +63,15 @@ export default function PerformancesPage() {
             performers: perf.performers.map(p => p.name),
             videoUrl: perf.videoUrl,
             thumbnailUrl: perf.thumbnailUrl,
+            galleryImages: perf.galleryImages,
+            videos: perf.videos,
             eventName: event?.name,
             eventType: event?.type,
             eventYear: perf.eventYear,
           };
         });
         setPerformances(mapped);
+        setAllEventTypes(allEventTypes);
       } catch (error) {
         console.error('Failed to fetch performances:', error);
       } finally {
@@ -78,12 +82,12 @@ export default function PerformancesPage() {
   }, []);
 
   const eventTypeOptions = useMemo(() => {
-    const types = new Set<string>();
+    const types = new Set<string>(allEventTypes);
     performances.forEach(p => {
       if (p.eventType) types.add(p.eventType);
     });
     return Array.from(types).sort();
-  }, [performances]);
+  }, [performances, allEventTypes]);
 
   const yearOptions = useMemo(() => {
     const years = new Set<number>();
@@ -93,10 +97,20 @@ export default function PerformancesPage() {
     return Array.from(years).sort((a, b) => b - a);
   }, [performances]);
 
+  const categoryFilters = useMemo(() => {
+    const cats = new Set<string>();
+    performances.forEach(p => {
+      if (p.category) cats.add(p.category);
+    });
+    return Array.from(cats).sort().map(c => ({ value: c, label: c }));
+  }, [performances]);
+
   const filtered = performances.filter(p => {
     if (activeCategory && p.category !== activeCategory) return false;
     if (activeEventType && p.eventType !== activeEventType) return false;
     if (activeYear && p.eventYear !== Number(activeYear)) return false;
+    if (activeMediaType === 'images' && !(p.thumbnailUrl || (p.galleryImages && p.galleryImages.length > 0))) return false;
+    if (activeMediaType === 'videos' && !(p.videoUrl || (p.videos && p.videos.length > 0))) return false;
     return true;
   });
 
@@ -120,6 +134,12 @@ export default function PerformancesPage() {
           ) : (
             <>
               <div className="mb-8 space-y-4">
+                <FilterBar
+                  filters={[{ value: 'images', label: 'Images' }, { value: 'videos', label: 'Videos' }]}
+                  activeFilter={activeMediaType}
+                  onFilterChange={setActiveMediaType}
+                  allLabel="All"
+                />
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
                     <label htmlFor="event-type-filter" className="text-sm font-medium text-earth-700">
@@ -160,7 +180,11 @@ export default function PerformancesPage() {
                   onFilterChange={setActiveCategory}
                 />
               </div>
-              <PerformanceGrid performances={filtered} />
+              {activeMediaType === 'videos' ? (
+                <PerformanceVideoGrid performances={filtered} />
+              ) : (
+                <PerformanceGrid performances={filtered} />
+              )}
             </>
           )}
         </div>

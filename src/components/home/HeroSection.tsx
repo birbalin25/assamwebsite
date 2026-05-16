@@ -218,7 +218,7 @@ export function HeroSection() {
                 )}
 
                 {slide.showDescription !== false && (
-                  <p
+                  <div
                     className={`text-earth-700 relative ${
                       slide.lang === 'as'
                         ? 'font-assamese'
@@ -230,9 +230,8 @@ export function HeroSection() {
                       top: slide.descriptionOffset?.top ? `${slide.descriptionOffset.top * 96}px` : undefined,
                       left: slide.descriptionOffset?.left ? `${slide.descriptionOffset.left * 96}px` : undefined,
                     }}
-                  >
-                    {slide.description}
-                  </p>
+                    dangerouslySetInnerHTML={{ __html: slide.description }}
+                  />
                 )}
               </motion.div>
             </AnimatePresence>

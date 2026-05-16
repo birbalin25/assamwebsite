@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { FileUploadField } from '@/components/admin/FileUploadField';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { getMemberById, updateMember } from '@/lib/services/members';
 import { DESIGNATION_OPTIONS } from '@/types/member';
@@ -36,6 +37,7 @@ export default function EditMemberPage() {
   const [profileImage, setProfileImage] = useState('');
   const [isPublished, setIsPublished] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   useEffect(() => {
     async function fetchMember() {
@@ -227,10 +229,19 @@ export default function EditMemberPage() {
         </Card>
 
         <div className="flex gap-3">
-          <Button onClick={handleSave} isLoading={saving}>Update Member</Button>
+          <Button onClick={() => setShowSaveConfirm(true)} isLoading={saving}>Update Member</Button>
           <Button variant="ghost" onClick={() => router.back()}>Cancel</Button>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSave(); }}
+        title="Update Member"
+        message="Are you sure you want to update this member?"
+        confirmLabel="Update"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

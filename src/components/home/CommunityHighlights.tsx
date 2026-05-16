@@ -38,9 +38,9 @@ export function CommunityHighlights() {
                   <h3 className="font-heading font-semibold text-lg text-earth-800 mb-2">
                     {config.highlightPerformersTitle}
                   </h3>
-                  <p className="text-earth-500 text-sm leading-relaxed mb-4">
-                    {config.highlightPerformersDescription}
-                  </p>
+                  <div className="text-earth-500 text-sm leading-relaxed mb-4 [&_p]:m-0"
+                    dangerouslySetInnerHTML={{ __html: config.highlightPerformersDescription }}
+                  />
                   <Link href="/performances">
                     <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
                       View Performances
@@ -61,9 +61,9 @@ export function CommunityHighlights() {
                   <h3 className="font-heading font-semibold text-lg text-earth-800 mb-2">
                     {config.highlightCommunityTitle}
                   </h3>
-                  <p className="text-earth-500 text-sm leading-relaxed mb-4">
-                    {config.highlightCommunityDescription}
-                  </p>
+                  <div className="text-earth-500 text-sm leading-relaxed mb-4 [&_p]:m-0"
+                    dangerouslySetInnerHTML={{ __html: config.highlightCommunityDescription }}
+                  />
                   <Link href="/community">
                     <Button variant="ghost" size="sm" rightIcon={<ArrowRight className="h-4 w-4" />}>
                       Meet Our Community

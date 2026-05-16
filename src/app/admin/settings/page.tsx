@@ -5,19 +5,16 @@ import { getSiteConfig, updateSiteConfig, getStoredDefaults, ensureDefaultsStore
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
 import { Spinner } from '@/components/ui/Spinner';
 import { FileUploadField } from '@/components/admin/FileUploadField';
 import { RotateCcw } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 
-type SectionKey = 'identity' | 'about' | 'community' | 'highlights' | 'social';
+type SectionKey = 'identity' | 'social';
 
 const sectionFields: Record<SectionKey, (keyof SiteConfig)[]> = {
   identity: ['siteName', 'siteTagline', 'contactEmail', 'contactPhone', 'siteLogo'],
-  about: ['aboutTitle', 'aboutDescription', 'aboutStoryTitle', 'aboutStoryParagraph1', 'aboutStoryParagraph2', 'aboutMission', 'aboutValue1Title', 'aboutValue1Description', 'aboutValue2Title', 'aboutValue2Description', 'aboutValue3Title', 'aboutValue3Description', 'aboutValue4Title', 'aboutValue4Description'],
-  community: ['communityTitle', 'communityDescription', 'communityImage'],
-  highlights: ['highlightPerformersTitle', 'highlightPerformersDescription', 'highlightCommunityTitle', 'highlightCommunityDescription'],
   social: ['facebookUrl', 'instagramUrl', 'youtubeUrl'],
 };
 
@@ -26,6 +23,9 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [defaults, setDefaults] = useState<SiteConfig | null>(null);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [showResetAllConfirm, setShowResetAllConfirm] = useState(false);
+  const [resetSectionTarget, setResetSectionTarget] = useState<SectionKey | null>(null);
 
   useEffect(() => {
     async function loadConfig() {
@@ -53,20 +53,20 @@ export default function AdminSettingsPage() {
 
   const handleResetSection = (section: SectionKey) => {
     if (!defaults || !config) return;
-    if (!confirm(`Reset this section to defaults? Your current values will be overwritten.`)) return;
     const fields = sectionFields[section];
     const updates: Partial<SiteConfig> = {};
     for (const field of fields) {
       (updates as unknown as Record<string, unknown>)[field] = (defaults as unknown as Record<string, unknown>)[field] ?? '';
     }
     setConfig(prev => prev ? { ...prev, ...updates } : prev);
+    setResetSectionTarget(null);
     toast.success('Section reset to defaults. Click "Save Settings" to apply.');
   };
 
   const handleResetAll = () => {
     if (!defaults) return;
-    if (!confirm('Reset ALL settings to defaults? This will overwrite all your changes.')) return;
     setConfig({ ...defaults });
+    setShowResetAllConfirm(false);
     toast.success('All settings reset to defaults. Click "Save Settings" to apply.');
   };
 
@@ -99,10 +99,10 @@ export default function AdminSettingsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-heading font-bold text-earth-800">Settings</h1>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={handleResetAll} leftIcon={<RotateCcw className="h-4 w-4" />}>
+          <Button variant="ghost" onClick={() => setShowResetAllConfirm(true)} leftIcon={<RotateCcw className="h-4 w-4" />}>
             Reset All
           </Button>
-          <Button onClick={handleSave} isLoading={saving}>
+          <Button onClick={() => setShowSaveConfirm(true)} isLoading={saving}>
             Save Settings
           </Button>
         </div>
@@ -111,7 +111,7 @@ export default function AdminSettingsPage() {
       <div className="space-y-6">
         {/* Section 1: Site Identity */}
         <Card>
-          <SectionHeader title="Site Identity" section="identity" onReset={handleResetSection} />
+          <SectionHeader title="Site Identity" section="identity" onReset={setResetSectionTarget} />
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label="Site Name"
@@ -149,168 +149,9 @@ export default function AdminSettingsPage() {
           </div>
         </Card>
 
-        {/* Section: About Page */}
-        <Card>
-          <SectionHeader title="About Page" section="about" onReset={handleResetSection} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Page Title"
-              value={config.aboutTitle || ''}
-              onChange={(e) => handleChange('aboutTitle', e.target.value)}
-              placeholder="e.g. About Us"
-              helperText={defaults?.aboutTitle ? `Default: ${defaults.aboutTitle}` : undefined}
-            />
-            <Input
-              label="Page Description"
-              value={config.aboutDescription || ''}
-              onChange={(e) => handleChange('aboutDescription', e.target.value)}
-              placeholder="Short description under the page header"
-            />
-            <div className="sm:col-span-2 border-t border-earth-200 pt-4 mt-2">
-              <p className="text-sm font-medium text-earth-700 mb-3">Our Story</p>
-            </div>
-            <Input
-              label="Story Section Title"
-              value={config.aboutStoryTitle || ''}
-              onChange={(e) => handleChange('aboutStoryTitle', e.target.value)}
-              placeholder="e.g. Our Story"
-            />
-            <div className="sm:col-span-2">
-              <Textarea
-                label="Story Paragraph 1"
-                value={config.aboutStoryParagraph1 || ''}
-                onChange={(e) => handleChange('aboutStoryParagraph1', e.target.value)}
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Textarea
-                label="Story Paragraph 2"
-                value={config.aboutStoryParagraph2 || ''}
-                onChange={(e) => handleChange('aboutStoryParagraph2', e.target.value)}
-              />
-            </div>
-            <div className="sm:col-span-2 border-t border-earth-200 pt-4 mt-2">
-              <p className="text-sm font-medium text-earth-700 mb-3">Mission Statement</p>
-            </div>
-            <div className="sm:col-span-2">
-              <Textarea
-                label="Mission"
-                value={config.aboutMission || ''}
-                onChange={(e) => handleChange('aboutMission', e.target.value)}
-              />
-            </div>
-            <div className="sm:col-span-2 border-t border-earth-200 pt-4 mt-2">
-              <p className="text-sm font-medium text-earth-700 mb-3">Values (4 cards shown on the About page)</p>
-            </div>
-            <Input
-              label="Value 1 Title"
-              value={config.aboutValue1Title || ''}
-              onChange={(e) => handleChange('aboutValue1Title', e.target.value)}
-            />
-            <Input
-              label="Value 1 Description"
-              value={config.aboutValue1Description || ''}
-              onChange={(e) => handleChange('aboutValue1Description', e.target.value)}
-            />
-            <Input
-              label="Value 2 Title"
-              value={config.aboutValue2Title || ''}
-              onChange={(e) => handleChange('aboutValue2Title', e.target.value)}
-            />
-            <Input
-              label="Value 2 Description"
-              value={config.aboutValue2Description || ''}
-              onChange={(e) => handleChange('aboutValue2Description', e.target.value)}
-            />
-            <Input
-              label="Value 3 Title"
-              value={config.aboutValue3Title || ''}
-              onChange={(e) => handleChange('aboutValue3Title', e.target.value)}
-            />
-            <Input
-              label="Value 3 Description"
-              value={config.aboutValue3Description || ''}
-              onChange={(e) => handleChange('aboutValue3Description', e.target.value)}
-            />
-            <Input
-              label="Value 4 Title"
-              value={config.aboutValue4Title || ''}
-              onChange={(e) => handleChange('aboutValue4Title', e.target.value)}
-            />
-            <Input
-              label="Value 4 Description"
-              value={config.aboutValue4Description || ''}
-              onChange={(e) => handleChange('aboutValue4Description', e.target.value)}
-            />
-          </div>
-        </Card>
-
-        {/* Section: Community Page */}
-        <Card>
-          <SectionHeader title="Community Page" section="community" onReset={handleResetSection} />
-          <p className="text-sm text-earth-500 mb-4">Configure the title, description, and header image for the Community page.</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Page Title"
-              value={config.communityTitle || ''}
-              onChange={(e) => handleChange('communityTitle', e.target.value)}
-              placeholder="e.g. Community"
-              helperText="Default: Community"
-            />
-            <div className="sm:col-span-2">
-              <Textarea
-                label="Page Description"
-                value={config.communityDescription || ''}
-                onChange={(e) => handleChange('communityDescription', e.target.value)}
-                placeholder="Description shown below the community page header..."
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <FileUploadField
-                label="Header Image"
-                value={config.communityImage || ''}
-                onChange={(url) => handleChange('communityImage', url)}
-                type="image"
-                storagePath="site/community"
-                helperText="Banner image shown at the top of the Community page"
-              />
-            </div>
-          </div>
-        </Card>
-
-
-        {/* Section: Community Highlights */}
-        <Card>
-          <SectionHeader title="Community Highlights" section="highlights" onReset={handleResetSection} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Performers Section Title"
-              value={config.highlightPerformersTitle}
-              onChange={(e) => handleChange('highlightPerformersTitle', e.target.value)}
-              helperText={defaults ? `Default: ${defaults.highlightPerformersTitle}` : undefined}
-            />
-            <Input
-              label="Community Section Title"
-              value={config.highlightCommunityTitle}
-              onChange={(e) => handleChange('highlightCommunityTitle', e.target.value)}
-              helperText={defaults ? `Default: ${defaults.highlightCommunityTitle}` : undefined}
-            />
-            <Textarea
-              label="Performers Section Description"
-              value={config.highlightPerformersDescription}
-              onChange={(e) => handleChange('highlightPerformersDescription', e.target.value)}
-            />
-            <Textarea
-              label="Community Section Description"
-              value={config.highlightCommunityDescription}
-              onChange={(e) => handleChange('highlightCommunityDescription', e.target.value)}
-            />
-          </div>
-        </Card>
-
         {/* Section: Social Links */}
         <Card>
-          <SectionHeader title="Social Links" section="social" onReset={handleResetSection} />
+          <SectionHeader title="Social Links" section="social" onReset={setResetSectionTarget} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Input
               label="Facebook URL"
@@ -336,6 +177,31 @@ export default function AdminSettingsPage() {
           </div>
         </Card>
       </div>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSave(); }}
+        title="Save Settings"
+        message="Are you sure you want to save all settings?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
+      <ConfirmDialog
+        isOpen={showResetAllConfirm}
+        onClose={() => setShowResetAllConfirm(false)}
+        onConfirm={handleResetAll}
+        title="Reset All Settings"
+        message="Reset ALL settings to defaults? This will overwrite all your changes. You will still need to click Save to apply."
+        confirmLabel="Reset All"
+      />
+      <ConfirmDialog
+        isOpen={!!resetSectionTarget}
+        onClose={() => setResetSectionTarget(null)}
+        onConfirm={() => resetSectionTarget && handleResetSection(resetSectionTarget)}
+        title="Reset Section"
+        message="Reset this section to defaults? Your current values will be overwritten. You will still need to click Save to apply."
+        confirmLabel="Reset"
+      />
     </div>
   );
 }

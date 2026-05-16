@@ -6,31 +6,19 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { FileUploadField } from '@/components/admin/FileUploadField';
 import { toast } from 'sonner';
 import { getPerformanceById, updatePerformance } from '@/lib/services/performances';
 import { getAllEvents } from '@/lib/services/events';
-import type { Event, WithId, PerformanceCategory, PerformanceType } from '@/types';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import type { Event, WithId } from '@/types';
+import { PRESET_CATEGORIES, PRESET_TYPES } from '@/types';
 
-const categoryOptions = [
-  { value: 'kids', label: 'Kids' },
-  { value: 'teens', label: 'Teens' },
-  { value: 'adults', label: 'Adults' },
-];
-
-const typeOptions = [
-  { value: 'Solo Dance', label: 'Solo Dance' },
-  { value: 'Group Dance', label: 'Group Dance' },
-  { value: 'Solo Song', label: 'Solo Song' },
-  { value: 'Chorus', label: 'Chorus' },
-  { value: 'Drama', label: 'Drama' },
-  { value: 'Instrumental', label: 'Instrumental' },
-  { value: 'Recitation', label: 'Recitation' },
-  { value: 'Other', label: 'Other' },
-];
+const categoryOptions = [...PRESET_CATEGORIES.map(c => ({ value: c, label: c })), { value: 'Other', label: 'Other' }];
+const typeOptions = [...PRESET_TYPES.map(t => ({ value: t, label: t })), { value: 'Other', label: 'Other' }];
 
 export default function EditPerformancePage() {
   const params = useParams();
@@ -45,8 +33,10 @@ export default function EditPerformancePage() {
   // Form state
   const [title, setTitle] = useState('');
   const [eventId, setEventId] = useState('');
-  const [category, setCategory] = useState<PerformanceCategory>('adults');
-  const [type, setType] = useState<PerformanceType>('Other');
+  const [category, setCategory] = useState('Adults');
+  const [customCategory, setCustomCategory] = useState('');
+  const [type, setType] = useState('Solo Dance');
+  const [customType, setCustomType] = useState('');
   const [description, setDescription] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
@@ -54,6 +44,7 @@ export default function EditPerformancePage() {
   const [videos, setVideos] = useState<string[]>([]);
   const [order, setOrder] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -71,8 +62,24 @@ export default function EditPerformancePage() {
 
         setTitle(performance.title);
         setEventId(performance.eventId || '');
-        setCategory(performance.category);
-        setType(performance.type);
+
+        // If saved category matches a preset, select it; otherwise treat as custom
+        const presetCats = PRESET_CATEGORIES as readonly string[];
+        if (presetCats.includes(performance.category)) {
+          setCategory(performance.category);
+        } else {
+          setCategory('Other');
+          setCustomCategory(performance.category);
+        }
+
+        // Same for type
+        const presetTypes = PRESET_TYPES as readonly string[];
+        if (presetTypes.includes(performance.type)) {
+          setType(performance.type);
+        } else {
+          setType('Other');
+          setCustomType(performance.type);
+        }
         setDescription(performance.description || '');
         setThumbnailUrl(performance.thumbnailUrl || '');
         setVideoUrl(performance.videoUrl || '');
@@ -98,10 +105,13 @@ export default function EditPerformancePage() {
       const selectedEvent = events.find(ev => ev.id === eventId);
       const eventYear = selectedEvent?.year || new Date().getFullYear();
 
+      const resolvedCategory = category === 'Other' && customCategory.trim() ? customCategory.trim() : category;
+      const resolvedType = type === 'Other' && customType.trim() ? customType.trim() : type;
+
       await updatePerformance(performanceId, {
         title,
-        category,
-        type,
+        category: resolvedCategory,
+        type: resolvedType,
         eventId: eventId || '',
         eventYear,
         ...(videoUrl && { videoUrl }),
@@ -141,17 +151,30 @@ export default function EditPerformancePage() {
   return (
     <div>
       <h1 className="text-2xl font-heading font-bold text-earth-800 mb-6">Edit Performance</h1>
-      <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
+      <form onSubmit={(e) => { e.preventDefault(); setShowSaveConfirm(true); }} className="max-w-3xl space-y-6">
         <Card>
           <h2 className="font-heading font-semibold text-earth-800 mb-4">Performance Details</h2>
           <div className="space-y-4">
             <Input label="Title" name="title" placeholder="e.g., Bihu Dance Group" value={title} onChange={(e) => setTitle(e.target.value)} required />
             <Select label="Event" name="eventId" options={eventOptions} placeholder="Select event" value={eventId} onChange={(e) => setEventId(e.target.value)} />
             <div className="grid sm:grid-cols-2 gap-4">
-              <Select label="Category" name="category" options={categoryOptions} value={category} onChange={(e) => setCategory(e.target.value as PerformanceCategory)} />
-              <Select label="Type" name="type" options={typeOptions} value={type} onChange={(e) => setType(e.target.value as PerformanceType)} />
+              <div>
+                <Select label="Category" name="category" options={categoryOptions} value={category} onChange={(e) => setCategory(e.target.value)} />
+                {category === 'Other' && (
+                  <input value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter custom category..." className="mt-2 block w-full rounded-lg border border-earth-300 px-3.5 py-2.5 text-sm text-earth-800 bg-white placeholder:text-earth-400 focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500" />
+                )}
+              </div>
+              <div>
+                <Select label="Type" name="type" options={typeOptions} value={type} onChange={(e) => setType(e.target.value)} />
+                {type === 'Other' && (
+                  <input value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="Enter custom type..." className="mt-2 block w-full rounded-lg border border-earth-300 px-3.5 py-2.5 text-sm text-earth-800 bg-white placeholder:text-earth-400 focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500" />
+                )}
+              </div>
             </div>
-            <Textarea label="Description" name="description" placeholder="Describe this performance..." value={description} onChange={(e) => setDescription(e.target.value)} />
+            <div>
+              <label className="block text-sm font-medium text-earth-700 mb-1.5">Description</label>
+              <RichTextEditor content={description} onChange={setDescription} />
+            </div>
           </div>
         </Card>
 
@@ -209,11 +232,13 @@ export default function EditPerformancePage() {
         <Card>
           <h2 className="font-heading font-semibold text-earth-800 mb-4">Additional Videos</h2>
           <FileUploadField
-            label="Add Video"
+            label="Add Videos"
             value=""
+            multiple
             onChange={(url) => { if (url) setVideos(prev => [...prev, url]); }}
             type="video"
             storagePath="performances/extra-videos"
+            helperText="Select multiple video files at once or drag & drop. You can also paste YouTube/Vimeo URLs."
           />
           {videos.length > 0 && (
             <div className="mt-4 space-y-2">
@@ -241,6 +266,15 @@ export default function EditPerformancePage() {
           <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
         </div>
       </form>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSubmit({ preventDefault: () => {} } as React.FormEvent); }}
+        title="Update Performance"
+        message="Are you sure you want to update this performance?"
+        confirmLabel="Update"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

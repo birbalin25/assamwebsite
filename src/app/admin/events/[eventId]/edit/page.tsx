@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { FileUploadField } from '@/components/admin/FileUploadField';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { getEventById, updateEvent } from '@/lib/services/events';
 import { slugify } from '@/lib/utils/slugify';
@@ -38,6 +39,8 @@ export default function EditEventPage() {
   const [featuredImage, setFeaturedImage] = useState('');
   const [eventType, setEventType] = useState('Rongali Bihu');
   const [customType, setCustomType] = useState('');
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!eventId) return;
@@ -130,7 +133,7 @@ export default function EditEventPage() {
   return (
     <div>
       <h1 className="text-2xl font-heading font-bold text-earth-800 mb-6">Edit Event</h1>
-      <form onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={(e) => { e.preventDefault(); setShowSaveConfirm(true); }}>
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -205,6 +208,15 @@ export default function EditEventPage() {
           </div>
         </div>
       </form>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSubmit({ preventDefault: () => {}, currentTarget: formRef.current } as unknown as React.FormEvent<HTMLFormElement>); }}
+        title="Update Event"
+        message="Are you sure you want to update this event?"
+        confirmLabel="Update"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

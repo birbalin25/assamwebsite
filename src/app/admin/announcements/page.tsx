@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getAllAnnouncements, deleteAnnouncement, ensureDefaultAnnouncements } from '@/lib/services/announcements';
 import { toast } from 'sonner';
 import type { Announcement, WithId } from '@/types';
@@ -15,6 +16,7 @@ export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<WithId<Announcement>[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const fetchAnnouncements = async () => {
     try {
@@ -31,7 +33,6 @@ export default function AdminAnnouncementsPage() {
   useEffect(() => { fetchAnnouncements(); }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
     setDeleting(id);
     try {
       await deleteAnnouncement(id);
@@ -41,6 +42,7 @@ export default function AdminAnnouncementsPage() {
       toast.error('Failed to delete announcement.');
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -59,7 +61,7 @@ export default function AdminAnnouncementsPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(String(item.id)); }}
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDeleteTarget(String(item.id)); }}
             isLoading={deleting === String(item.id)}
             className="text-red-500 hover:text-red-700 hover:bg-red-50"
           >
@@ -87,6 +89,15 @@ export default function AdminAnnouncementsPage() {
         </Link>
       </div>
       <DataTable columns={columns} data={announcements as unknown as Record<string, unknown>[]} keyField="id" />
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        title="Delete Announcement"
+        message="Are you sure you want to delete this announcement? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={!!deleting}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getAllMembers, deleteMember } from '@/lib/services/members';
 import { toast } from 'sonner';
 import type { Member, WithId } from '@/types';
@@ -15,6 +16,7 @@ export default function AdminMembersPage() {
   const [members, setMembers] = useState<WithId<Member>[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const fetchMembers = async () => {
     try {
@@ -30,7 +32,6 @@ export default function AdminMembersPage() {
   useEffect(() => { fetchMembers(); }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this member?')) return;
     setDeleting(id);
     try {
       await deleteMember(id);
@@ -40,6 +41,7 @@ export default function AdminMembersPage() {
       toast.error('Failed to delete member.');
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -78,7 +80,7 @@ export default function AdminMembersPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(String(item.id)); }}
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDeleteTarget(String(item.id)); }}
             isLoading={deleting === String(item.id)}
             className="text-red-500 hover:text-red-700 hover:bg-red-50"
           >
@@ -106,6 +108,15 @@ export default function AdminMembersPage() {
         </Link>
       </div>
       <DataTable columns={columns} data={members as unknown as Record<string, unknown>[]} keyField="id" />
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        title="Delete Member"
+        message="Are you sure you want to delete this member? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={!!deleting}
+      />
     </div>
   );
 }

@@ -50,6 +50,12 @@ export interface SiteConfig {
   aboutValue4Title?: string;
   aboutValue4Description?: string;
 
+  // Donations
+  donationsEnabled?: boolean;
+  paypalEmail?: string;
+  donationGoal?: number;
+  donationMessage?: string;
+
   // Contact / Email settings
   contactFormRecipient?: string;
   contactFormEnabled?: boolean;
@@ -75,6 +81,9 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   highlightCommunityTitle: 'Growing Community',
   highlightCommunityDescription:
     'Families from across the United States come together to celebrate our rich Assamese heritage, creating lasting bonds and passing traditions to the next generation.',
+  donationsEnabled: true,
+  donationGoal: 10000,
+  donationMessage: 'Your generous donation helps us preserve Assamese culture and organize community events across the USA.',
   contactFormRecipient: 'vijay.in09@gmail.com',
   contactFormEnabled: true,
   aboutTitle: 'About Us',
