@@ -36,6 +36,8 @@ export default function EditEventPage() {
   const [saving, setSaving] = useState(false);
   const [description, setDescription] = useState('');
   const [featuredImage, setFeaturedImage] = useState('');
+  const [eventType, setEventType] = useState('Rongali Bihu');
+  const [customType, setCustomType] = useState('');
 
   useEffect(() => {
     if (!eventId) return;
@@ -45,6 +47,13 @@ export default function EditEventPage() {
           setEvent(data);
           setDescription(data.description || '');
           setFeaturedImage(data.featuredImage || '');
+          const knownTypes = eventTypeOptions.map(o => o.value);
+          if (knownTypes.includes(data.type)) {
+            setEventType(data.type);
+          } else {
+            setEventType('Other');
+            setCustomType(data.type);
+          }
         }
       })
       .catch(() => {
@@ -59,7 +68,8 @@ export default function EditEventPage() {
     try {
       const formData = new FormData(e.currentTarget);
       const name = formData.get('name') as string;
-      const type = formData.get('type') as EventType;
+      const selectedType = formData.get('type') as string;
+      const type = (selectedType === 'Other' && customType.trim() ? customType.trim() : selectedType) as EventType;
       const year = Number(formData.get('year'));
       const dateStr = formData.get('date') as string;
       const endDateStr = formData.get('endDate') as string;
@@ -128,7 +138,12 @@ export default function EditEventPage() {
               <div className="space-y-4">
                 <Input label="Event Name" name="name" placeholder="e.g., Rongali Bihu 2025" defaultValue={event.name} required />
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Select label="Event Type" name="type" options={eventTypeOptions} placeholder="Select type" defaultValue={event.type} />
+                  <div>
+                    <Select label="Event Type" name="type" options={eventTypeOptions} value={eventType} onChange={(e) => setEventType(e.target.value)} placeholder="Select type" />
+                    {eventType === 'Other' && (
+                      <input value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="Enter custom event type..." className="mt-2 block w-full rounded-lg border border-earth-300 px-3.5 py-2.5 text-sm text-earth-800 bg-white placeholder:text-earth-400 focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500" />
+                    )}
+                  </div>
                   <Input label="Year" name="year" type="number" defaultValue={event.year} required />
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
