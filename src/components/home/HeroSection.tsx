@@ -24,6 +24,10 @@ type Slide = {
   ctaLink?: string;
   titleOffset?: SlideOffset;
   descriptionOffset?: SlideOffset;
+  dividerOffset?: SlideOffset;
+  showTitle?: boolean;
+  showDescription?: boolean;
+  showDivider?: boolean;
 };
 
 const fallbackSlides: Slide[] = [
@@ -79,6 +83,10 @@ export function HeroSection() {
                 ctaLink: b.ctaLink,
                 titleOffset: b.titleOffset,
                 descriptionOffset: b.descriptionOffset,
+                dividerOffset: b.dividerOffset,
+                showTitle: b.showTitle !== false,
+                showDescription: b.showDescription !== false,
+                showDivider: b.showDivider !== false,
               }))
             );
           }
@@ -169,51 +177,63 @@ export function HeroSection() {
                 transition={{ duration: 0.5 }}
                 className="text-center"
               >
-                <h1
-                  className="font-heading font-extrabold leading-none mb-1 relative"
-                  style={{
-                    whiteSpace: 'nowrap',
-                    top: slide.titleOffset?.top ? `${slide.titleOffset.top * 96}px` : undefined,
-                    left: slide.titleOffset?.left ? `${slide.titleOffset.left * 96}px` : undefined,
-                  }}
-                >
-                  <span
-                    className="text-gamosa-600 drop-shadow-sm tracking-tight"
-                    style={{ fontSize: 'clamp(1.8rem, 5vw, 3.5rem)' }}
+                {slide.showTitle !== false && (
+                  <h1
+                    className="font-heading font-extrabold leading-none mb-1 relative"
+                    style={{
+                      whiteSpace: 'nowrap',
+                      top: slide.titleOffset?.top ? `${slide.titleOffset.top * 96}px` : undefined,
+                      left: slide.titleOffset?.left ? `${slide.titleOffset.left * 96}px` : undefined,
+                    }}
                   >
-                    {slide.title || 'Assam in Dallas'}
-                  </span>
-                  <span
-                    className="text-muga-500 font-bold italic ml-2"
-                    style={{ fontSize: 'clamp(1.2rem, 3vw, 2.2rem)' }}
+                    <span
+                      className="text-gamosa-600 drop-shadow-sm tracking-tight"
+                      style={{ fontSize: 'clamp(1.8rem, 5vw, 3.5rem)' }}
+                    >
+                      {slide.title || 'Assam in Dallas'}
+                    </span>
+                    <span
+                      className="text-muga-500 font-bold italic ml-2"
+                      style={{ fontSize: 'clamp(1.2rem, 3vw, 2.2rem)' }}
+                    >
+                      USA
+                    </span>
+                  </h1>
+                )}
+
+                {slide.showDivider !== false && (
+                  <div
+                    className="flex items-center gap-1.5 justify-center mb-2 mt-2 relative"
+                    style={{
+                      top: slide.dividerOffset?.top ? `${slide.dividerOffset.top * 96}px` : undefined,
+                      left: slide.dividerOffset?.left ? `${slide.dividerOffset.left * 96}px` : undefined,
+                    }}
                   >
-                    USA
-                  </span>
-                </h1>
+                    <div className="h-[3px] w-10 bg-gamosa-500 rounded-full" />
+                    <div className="h-[3px] w-6 bg-muga-500 rounded-full" />
+                    <div className="h-[3px] w-3 bg-tea-500 rounded-full" />
+                    <div className="h-[3px] w-6 bg-muga-500 rounded-full" />
+                    <div className="h-[3px] w-10 bg-gamosa-500 rounded-full" />
+                  </div>
+                )}
 
-                <div className="flex items-center gap-1.5 justify-center mb-2 mt-2">
-                  <div className="h-[3px] w-10 bg-gamosa-500 rounded-full" />
-                  <div className="h-[3px] w-6 bg-muga-500 rounded-full" />
-                  <div className="h-[3px] w-3 bg-tea-500 rounded-full" />
-                  <div className="h-[3px] w-6 bg-muga-500 rounded-full" />
-                  <div className="h-[3px] w-10 bg-gamosa-500 rounded-full" />
-                </div>
-
-                <p
-                  className={`text-earth-700 relative ${
-                    slide.lang === 'as'
-                      ? 'font-assamese'
-                      : 'font-heading font-medium italic'
-                  }`}
-                  style={{
-                    fontSize: 'clamp(0.75rem, 1.6vw, 1.1rem)',
-                    lineHeight: 1.7,
-                    top: slide.descriptionOffset?.top ? `${slide.descriptionOffset.top * 96}px` : undefined,
-                    left: slide.descriptionOffset?.left ? `${slide.descriptionOffset.left * 96}px` : undefined,
-                  }}
-                >
-                  {slide.description}
-                </p>
+                {slide.showDescription !== false && (
+                  <p
+                    className={`text-earth-700 relative ${
+                      slide.lang === 'as'
+                        ? 'font-assamese'
+                        : 'font-heading font-medium italic'
+                    }`}
+                    style={{
+                      fontSize: 'clamp(0.75rem, 1.6vw, 1.1rem)',
+                      lineHeight: 1.7,
+                      top: slide.descriptionOffset?.top ? `${slide.descriptionOffset.top * 96}px` : undefined,
+                      left: slide.descriptionOffset?.left ? `${slide.descriptionOffset.left * 96}px` : undefined,
+                    }}
+                  >
+                    {slide.description}
+                  </p>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
