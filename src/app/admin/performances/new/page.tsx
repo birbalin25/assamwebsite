@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { FileUploadField } from '@/components/admin/FileUploadField';
@@ -13,7 +13,9 @@ import { toast } from 'sonner';
 import { createPerformance } from '@/lib/services/performances';
 import { getAllEvents } from '@/lib/services/events';
 import { X, Film } from 'lucide-react';
-import type { Event, WithId, PerformanceCategory, PerformanceType } from '@/types';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import type { Event, WithId } from '@/types';
+import { PRESET_CATEGORIES, PRESET_TYPES } from '@/types';
 
 export default function NewPerformancePage() {
   const router = useRouter();
@@ -26,6 +28,16 @@ export default function NewPerformancePage() {
   const [videos, setVideos] = useState<string[]>([]);
   const [imageUploadKey, setImageUploadKey] = useState(0);
   const [videoUploadKey, setVideoUploadKey] = useState(0);
+  const [description, setDescription] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Kids');
+  const [customCategory, setCustomCategory] = useState('');
+  const [selectedType, setSelectedType] = useState('Solo Dance');
+  const [customType, setCustomType] = useState('');
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const categoryOptions = [...PRESET_CATEGORIES.map(c => ({ value: c, label: c })), { value: 'Other', label: 'Other' }];
+  const typeOptions = [...PRESET_TYPES.map(t => ({ value: t, label: t })), { value: 'Other', label: 'Other' }];
 
   useEffect(() => {
     getAllEvents()
@@ -42,10 +54,10 @@ export default function NewPerformancePage() {
     try {
       const formData = new FormData(e.currentTarget as HTMLFormElement);
       const title = formData.get('title') as string;
-      const category = formData.get('category') as PerformanceCategory;
-      const type = formData.get('type') as PerformanceType;
+      const category = selectedCategory === 'Other' && customCategory.trim() ? customCategory.trim() : selectedCategory;
+      const type = selectedType === 'Other' && customType.trim() ? customType.trim() : selectedType;
       const eventId = formData.get('eventId') as string;
-      const description = (formData.get('description') as string) || undefined;
+      const descriptionVal = description || undefined;
       const isPublished = !!formData.get('isPublished');
 
       const selectedEvent = events.find(ev => ev.id === eventId);
@@ -60,7 +72,7 @@ export default function NewPerformancePage() {
         performers: [],
         ...(videoUrl && { videoUrl }),
         ...(thumbnailUrl && { thumbnailUrl }),
-        ...(description && { description }),
+        ...(descriptionVal && { description: descriptionVal }),
         ...(galleryImages.length > 0 && { galleryImages }),
         ...(videos.length > 0 && { videos }),
         order: 0,
@@ -87,17 +99,30 @@ export default function NewPerformancePage() {
   return (
     <div>
       <h1 className="text-2xl font-heading font-bold text-earth-800 mb-6">New Performance</h1>
-      <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
+      <form ref={formRef} onSubmit={(e) => { e.preventDefault(); setShowSaveConfirm(true); }} className="max-w-3xl space-y-6">
         <Card>
           <h2 className="font-heading font-semibold text-earth-800 mb-4">Performance Details</h2>
           <div className="space-y-4">
             <Input label="Title" name="title" placeholder="e.g., Bihu Dance Group" required />
             <Select label="Event" name="eventId" options={eventOptions} placeholder="Select event" />
             <div className="grid sm:grid-cols-2 gap-4">
-              <Select label="Category" name="category" options={[{ value: 'kids', label: 'Kids' }, { value: 'teens', label: 'Teens' }, { value: 'adults', label: 'Adults' }]} />
-              <Select label="Type" name="type" options={[{ value: 'Solo Dance', label: 'Solo Dance' }, { value: 'Group Dance', label: 'Group Dance' }, { value: 'Solo Song', label: 'Solo Song' }, { value: 'Chorus', label: 'Chorus' }, { value: 'Drama', label: 'Drama' }, { value: 'Instrumental', label: 'Instrumental' }, { value: 'Recitation', label: 'Recitation' }, { value: 'Other', label: 'Other' }]} />
+              <div>
+                <Select label="Category" name="category" options={categoryOptions} value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} />
+                {selectedCategory === 'Other' && (
+                  <input value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter custom category..." className="mt-2 block w-full rounded-lg border border-earth-300 px-3.5 py-2.5 text-sm text-earth-800 bg-white placeholder:text-earth-400 focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500" />
+                )}
+              </div>
+              <div>
+                <Select label="Type" name="type" options={typeOptions} value={selectedType} onChange={(e) => setSelectedType(e.target.value)} />
+                {selectedType === 'Other' && (
+                  <input value={customType} onChange={(e) => setCustomType(e.target.value)} placeholder="Enter custom type..." className="mt-2 block w-full rounded-lg border border-earth-300 px-3.5 py-2.5 text-sm text-earth-800 bg-white placeholder:text-earth-400 focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500" />
+                )}
+              </div>
             </div>
-            <Textarea label="Description" name="description" placeholder="Describe this performance..." />
+            <div>
+              <label className="block text-sm font-medium text-earth-700 mb-1.5">Description</label>
+              <RichTextEditor content={description} onChange={setDescription} />
+            </div>
           </div>
         </Card>
 
@@ -180,17 +205,17 @@ export default function NewPerformancePage() {
           )}
           <FileUploadField
             key={videoUploadKey}
-            label="Add Video"
+            label="Add Videos"
             value=""
+            multiple
             onChange={(url) => {
               if (url) {
                 setVideos(prev => [...prev, url]);
-                setVideoUploadKey(prev => prev + 1);
               }
             }}
             type="video"
             storagePath="performances/videos"
-            helperText="Upload videos one at a time. Each will be added to the list."
+            helperText="Select multiple video files at once or drag & drop. You can also paste YouTube/Vimeo URLs."
           />
         </Card>
 
@@ -206,6 +231,15 @@ export default function NewPerformancePage() {
           <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
         </div>
       </form>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSubmit({ preventDefault: () => {}, currentTarget: formRef.current } as unknown as React.FormEvent); }}
+        title="Save Performance"
+        message="Are you sure you want to save this performance?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

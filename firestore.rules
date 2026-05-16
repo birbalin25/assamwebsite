@@ -51,6 +51,11 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
+    match /donationEvents/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
     // Contact messages: anyone can create, only authenticated can read/delete
     match /contactMessages/{docId} {
       allow create: if true;

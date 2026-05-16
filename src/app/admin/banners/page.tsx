@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Select } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
 import { FileUploadField } from '@/components/admin/FileUploadField';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, X, RotateCcw } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import type { Banner, WithId } from '@/types';
 import Image from 'next/image';
 
@@ -74,6 +75,8 @@ export default function AdminBannersPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<BannerFormData>(emptyForm);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [showSaveIntervalConfirm, setShowSaveIntervalConfirm] = useState(false);
   const [transitionInterval, setTransitionInterval] = useState(15);
   const [savingInterval, setSavingInterval] = useState(false);
   const [imageHistory, setImageHistory] = useState<ImageHistory>({});
@@ -87,12 +90,13 @@ export default function AdminBannersPage() {
         getSiteConfig(),
       ]);
       setBanners(data);
-      // Seed image history from current banner images and defaults
+      // Seed image history from current banner images and all default images
+      const allDefaultImages = DEFAULT_BANNERS.map(d => d.image);
       const hist: ImageHistory = {};
-      data.forEach((b, i) => {
+      data.forEach((b) => {
         const images: string[] = [b.image];
-        if (DEFAULT_BANNERS[i]?.image && !images.includes(DEFAULT_BANNERS[i].image)) {
-          images.push(DEFAULT_BANNERS[i].image);
+        for (const defImg of allDefaultImages) {
+          if (!images.includes(defImg)) images.push(defImg);
         }
         hist[b.id] = images.slice(0, 3);
       });
@@ -232,6 +236,10 @@ export default function AdminBannersPage() {
   };
 
   const handleSaveInterval = async () => {
+    if (transitionInterval < 4) {
+      toast.error('Slide transition interval must be at least 4 seconds.');
+      return;
+    }
     setSavingInterval(true);
     try {
       await updateSiteConfig({ bannerTransitionInterval: transitionInterval });
@@ -270,11 +278,11 @@ export default function AdminBannersPage() {
               label="Slide Transition Interval (seconds)"
               type="number"
               value={transitionInterval}
-              onChange={(e) => setTransitionInterval(Math.max(1, parseInt(e.target.value) || 15))}
-              helperText="How many seconds each banner is shown before switching. Default: 15"
+              onChange={(e) => setTransitionInterval(parseInt(e.target.value) || 0)}
+              helperText="Minimum 4 seconds. Default: 15"
             />
           </div>
-          <Button onClick={handleSaveInterval} isLoading={savingInterval} size="sm">
+          <Button onClick={() => setShowSaveIntervalConfirm(true)} isLoading={savingInterval} size="sm">
             Save Interval
           </Button>
         </div>
@@ -296,7 +304,10 @@ export default function AdminBannersPage() {
             <Input label="Title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Assam in Dallas" />
             <Select label="Language" value={form.lang} onChange={e => setForm(f => ({ ...f, lang: e.target.value as 'en' | 'as' }))} options={[{ value: 'en', label: 'English' }, { value: 'as', label: 'Assamese' }]} />
             <div className="md:col-span-2">
-              <Textarea label="Description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Banner description text..." rows={3} />
+              <div>
+                <label className="block text-sm font-medium text-earth-700 mb-1.5">Description</label>
+                <RichTextEditor content={form.description} onChange={(html) => setForm(f => ({ ...f, description: html }))} />
+              </div>
             </div>
             <div className="md:col-span-2">
               <FileUploadField label="Banner Image" value={form.image} onChange={(url) => setForm(f => ({ ...f, image: url }))} type="image" storagePath="banners" helperText="Upload an image or paste a URL" />
@@ -351,7 +362,7 @@ export default function AdminBannersPage() {
           </div>
 
           <div className="flex items-center gap-3 mt-5">
-            <Button onClick={handleSave} isLoading={saving}>
+            <Button onClick={() => setShowSaveConfirm(true)} isLoading={saving}>
               {editingId ? 'Update Banner' : 'Create Banner'}
             </Button>
             <Button variant="ghost" onClick={closeForm} disabled={saving}>Cancel</Button>
@@ -446,18 +457,9 @@ export default function AdminBannersPage() {
 
                   {/* Only show delete for banners after the first 2 */}
                   {!isProtected && (
-                    <>
-                      {deleteConfirmId === banner.id ? (
-                        <div className="flex items-center gap-1">
-                          <Button variant="danger" size="sm" onClick={() => handleDelete(banner.id)}>Confirm</Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
-                        </div>
-                      ) : (
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(banner.id)} aria-label="Delete banner">
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      )}
-                    </>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(banner.id)} aria-label="Delete banner">
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
                   )}
                 </div>
               </Card>
@@ -465,6 +467,32 @@ export default function AdminBannersPage() {
           })}
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+        title="Delete Banner"
+        message="Are you sure you want to delete this banner? This action cannot be undone."
+        confirmLabel="Delete"
+      />
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSave(); }}
+        title={editingId ? 'Update Banner' : 'Create Banner'}
+        message={editingId ? 'Are you sure you want to update this banner?' : 'Are you sure you want to create this banner?'}
+        confirmLabel={editingId ? 'Update' : 'Create'}
+        confirmVariant="primary"
+      />
+      <ConfirmDialog
+        isOpen={showSaveIntervalConfirm}
+        onClose={() => setShowSaveIntervalConfirm(false)}
+        onConfirm={() => { setShowSaveIntervalConfirm(false); handleSaveInterval(); }}
+        title="Save Interval"
+        message="Are you sure you want to update the slide transition interval?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

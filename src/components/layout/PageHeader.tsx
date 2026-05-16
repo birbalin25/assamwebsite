@@ -41,7 +41,9 @@ export function PageHeader({ title, description, breadcrumbs, children, classNam
           {title}
         </h1>
         {description && (
-          <p className="text-earth-300 text-lg max-w-2xl">{description}</p>
+          /<[a-z][\s\S]*>/i.test(description)
+            ? <div className="text-earth-300 text-lg [&_p]:m-0" dangerouslySetInnerHTML={{ __html: description }} />
+            : <p className="text-earth-300 text-lg whitespace-pre-line">{description}</p>
         )}
         {children}
       </div>

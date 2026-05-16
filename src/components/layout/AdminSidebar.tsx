@@ -7,7 +7,7 @@ import { getFirebaseAuth } from '@/lib/firebase/client';
 import { useAuth } from '@/providers/AuthProvider';
 import {
   LayoutDashboard, Calendar, Music, Users, Image, FolderOpen, Megaphone, Mail, Send,
-  Presentation, Heart, LogOut, ArrowLeft, Settings
+  Presentation, Heart, LogOut, ArrowLeft, Settings, Info, UsersRound
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { SiteLogo } from '@/components/shared/SiteLogo';
@@ -25,6 +25,8 @@ const iconMap: Record<string, React.ReactNode> = {
   Heart: <Heart className="h-5 w-5" />,
   Send: <Send className="h-5 w-5" />,
   Settings: <Settings className="h-5 w-5" />,
+  Info: <Info className="h-5 w-5" />,
+  UsersRound: <UsersRound className="h-5 w-5" />,
 };
 
 import { adminNavLinks } from '@/lib/constants/navigation';

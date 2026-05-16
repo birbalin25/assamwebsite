@@ -8,6 +8,7 @@ import { DataTable } from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { CategoryBadge } from '@/components/performances/CategoryBadge';
 import { Spinner } from '@/components/ui/Spinner';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getAllPerformances, deletePerformance } from '@/lib/services/performances';
 import { toast } from 'sonner';
 import type { Performance, WithId } from '@/types';
@@ -16,6 +17,7 @@ export default function AdminPerformancesPage() {
   const [performances, setPerformances] = useState<WithId<Performance>[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const fetchPerformances = async () => {
     try {
@@ -31,7 +33,6 @@ export default function AdminPerformancesPage() {
   useEffect(() => { fetchPerformances(); }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this performance?')) return;
     setDeleting(id);
     try {
       await deletePerformance(id);
@@ -41,6 +42,7 @@ export default function AdminPerformancesPage() {
       toast.error('Failed to delete performance.');
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -60,7 +62,7 @@ export default function AdminPerformancesPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDelete(String(item.id)); }}
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDeleteTarget(String(item.id)); }}
             isLoading={deleting === String(item.id)}
             className="text-red-500 hover:text-red-700 hover:bg-red-50"
           >
@@ -88,6 +90,15 @@ export default function AdminPerformancesPage() {
         </Link>
       </div>
       <DataTable columns={columns} data={performances as unknown as Record<string, unknown>[]} keyField="id" />
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        title="Delete Performance"
+        message="Are you sure you want to delete this performance? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={!!deleting}
+      />
     </div>
   );
 }

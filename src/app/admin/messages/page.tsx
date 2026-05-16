@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { Trash2, Mail, Clock, User } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getAllContactMessages, deleteContactMessage, type ContactMessageWithId } from '@/lib/services/contactMessages';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<ContactMessageWithId[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchMessages() {
@@ -29,7 +31,6 @@ export default function AdminMessagesPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this message?')) return;
     setDeleting(id);
     try {
       await deleteContactMessage(id);
@@ -39,6 +40,7 @@ export default function AdminMessagesPage() {
       toast.error('Failed to delete message.');
     } finally {
       setDeleting(null);
+      setDeleteTarget(null);
     }
   };
 
@@ -100,7 +102,7 @@ export default function AdminMessagesPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDelete(msg.id)}
+                    onClick={() => setDeleteTarget(msg.id)}
                     isLoading={deleting === msg.id}
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
                     title="Delete message"
@@ -113,6 +115,15 @@ export default function AdminMessagesPage() {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={!!deleting}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme inline {
   /* Gamosa Red - iconic Assamese towel */
@@ -164,4 +165,55 @@ body {
 ::selection {
   background-color: var(--color-muga-200);
   color: var(--color-earth-800);
+}
+
+/* Rich-text editor – lists & links */
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+}
+
+.ProseMirror li {
+  margin-bottom: 0.25em;
+}
+
+.ProseMirror a {
+  color: #2563EB;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Let TipTap inline color styles work — override prose forced colors */
+.ProseMirror,
+.ProseMirror p,
+.ProseMirror li,
+.ProseMirror blockquote,
+.ProseMirror strong,
+.ProseMirror em,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4 {
+  color: inherit;
+}
+
+/* Rendered rich-text content on public pages */
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+}
+
+.prose a {
+  color: #2563EB;
+  text-decoration: underline;
 }

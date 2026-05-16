@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { Info } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 export default function EmailConfigPage() {
@@ -15,6 +16,7 @@ export default function EmailConfigPage() {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [resendApiKey, setResendApiKey] = useState('');
   const [contactFormEnabled, setContactFormEnabled] = useState(true);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   useEffect(() => {
     async function loadConfig() {
@@ -63,7 +65,7 @@ export default function EmailConfigPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-heading font-bold text-earth-800">Email Configuration</h1>
-        <Button onClick={handleSave} isLoading={saving}>Save Settings</Button>
+        <Button onClick={() => setShowSaveConfirm(true)} isLoading={saving}>Save Settings</Button>
       </div>
 
       <div className="space-y-6 max-w-2xl">
@@ -147,6 +149,15 @@ export default function EmailConfigPage() {
           />
         </Card>
       </div>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSave(); }}
+        title="Save Email Settings"
+        message="Are you sure you want to save the email configuration?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

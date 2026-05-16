@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Card } from '@/components/ui/Card';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { createAnnouncement } from '@/lib/services/announcements';
 import { slugify } from '@/lib/utils/slugify';
@@ -16,6 +17,8 @@ export default function NewAnnouncementPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState('');
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +57,7 @@ export default function NewAnnouncementPage() {
   return (
     <div>
       <h1 className="text-2xl font-heading font-bold text-earth-800 mb-6">New Announcement</h1>
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+      <form ref={formRef} onSubmit={(e) => { e.preventDefault(); setShowSaveConfirm(true); }} className="max-w-2xl space-y-6">
         <Card>
           <div className="space-y-4">
             <Input label="Title" name="title" required />
@@ -81,6 +84,15 @@ export default function NewAnnouncementPage() {
           <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
         </div>
       </form>
+      <ConfirmDialog
+        isOpen={showSaveConfirm}
+        onClose={() => setShowSaveConfirm(false)}
+        onConfirm={() => { setShowSaveConfirm(false); handleSubmit({ preventDefault: () => {}, currentTarget: formRef.current } as unknown as React.FormEvent); }}
+        title="Save Announcement"
+        message="Are you sure you want to save this announcement?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import { Timestamp } from './common';
 
-export type PerformanceCategory = 'kids' | 'teens' | 'adults';
-export type PerformanceType = 'Solo Dance' | 'Group Dance' | 'Solo Song' | 'Chorus' | 'Drama' | 'Instrumental' | 'Recitation' | 'Other';
+export type PerformanceCategory = string;
+export type PerformanceType = string;
+
+export const PRESET_CATEGORIES = ['Kids', 'Teens', 'Adults'] as const;
+export const PRESET_TYPES = ['Solo Dance', 'Group Dance', 'Solo Song', 'Chorus', 'Drama', 'Instrumental', 'Recitation'] as const;
 
 export interface Performer {
   memberId: string;
