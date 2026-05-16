@@ -86,7 +86,7 @@ export function HeroSection() {
                 dividerOffset: b.dividerOffset,
                 showTitle: b.showTitle !== false,
                 showDescription: b.showDescription !== false,
-                showDivider: b.showDivider !== false,
+                showDivider: b.showDivider === true,
               }))
             );
           }
@@ -201,7 +201,7 @@ export function HeroSection() {
                   </h1>
                 )}
 
-                {slide.showDivider !== false && (
+                {slide.showDivider === true && (
                   <div
                     className="flex items-center gap-1.5 justify-center mb-2 mt-2 relative"
                     style={{

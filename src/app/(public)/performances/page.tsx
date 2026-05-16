@@ -16,13 +16,7 @@ const categoryFilters = [
   { value: 'adults', label: 'Adults' },
 ];
 
-const eventTypeOptions = [
-  'Rongali Bihu',
-  'Bohag Bihu',
-  'Magh Bihu',
-  'Cultural Program',
-  'Other',
-];
+// Built dynamically from event data below
 
 interface MappedPerformance {
   id: string;
@@ -82,6 +76,14 @@ export default function PerformancesPage() {
     }
     fetchData();
   }, []);
+
+  const eventTypeOptions = useMemo(() => {
+    const types = new Set<string>();
+    performances.forEach(p => {
+      if (p.eventType) types.add(p.eventType);
+    });
+    return Array.from(types).sort();
+  }, [performances]);
 
   const yearOptions = useMemo(() => {
     const years = new Set<number>();
