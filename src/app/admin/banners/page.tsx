@@ -56,6 +56,16 @@ const emptyForm: BannerFormData = {
   showDivider: false,
 };
 
+// Track last 3 images per banner for "Reset to" feature
+type ImageHistory = Record<string, string[]>;
+
+function addToHistory(history: ImageHistory, bannerId: string, imageUrl: string): ImageHistory {
+  const prev = history[bannerId] || [];
+  if (prev[0] === imageUrl) return history;
+  const updated = [imageUrl, ...prev.filter(u => u !== imageUrl)].slice(0, 3);
+  return { ...history, [bannerId]: updated };
+}
+
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<WithId<Banner>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +76,8 @@ export default function AdminBannersPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [transitionInterval, setTransitionInterval] = useState(15);
   const [savingInterval, setSavingInterval] = useState(false);
+  const [imageHistory, setImageHistory] = useState<ImageHistory>({});
+  const [resetMenuId, setResetMenuId] = useState<string | null>(null);
 
   const fetchBanners = async () => {
     try {
@@ -75,6 +87,16 @@ export default function AdminBannersPage() {
         getSiteConfig(),
       ]);
       setBanners(data);
+      // Seed image history from current banner images and defaults
+      const hist: ImageHistory = {};
+      data.forEach((b, i) => {
+        const images: string[] = [b.image];
+        if (DEFAULT_BANNERS[i]?.image && !images.includes(DEFAULT_BANNERS[i].image)) {
+          images.push(DEFAULT_BANNERS[i].image);
+        }
+        hist[b.id] = images.slice(0, 3);
+      });
+      setImageHistory(hist);
       if (config.bannerTransitionInterval && config.bannerTransitionInterval > 0) {
         setTransitionInterval(config.bannerTransitionInterval);
       }
@@ -130,18 +152,9 @@ export default function AdminBannersPage() {
   };
 
   const handleSave = async () => {
-    if (!form.title.trim()) {
-      toast.error('Title is required');
-      return;
-    }
-    if (!form.description.trim()) {
-      toast.error('Description is required');
-      return;
-    }
-    if (!form.image.trim()) {
-      toast.error('Image is required');
-      return;
-    }
+    if (!form.title.trim()) { toast.error('Title is required'); return; }
+    if (!form.description.trim()) { toast.error('Description is required'); return; }
+    if (!form.image.trim()) { toast.error('Image is required'); return; }
 
     setSaving(true);
     try {
@@ -173,6 +186,11 @@ export default function AdminBannersPage() {
       };
 
       if (editingId) {
+        // Track old image in history before saving new one
+        const oldBanner = banners.find(b => b.id === editingId);
+        if (oldBanner && oldBanner.image !== form.image.trim()) {
+          setImageHistory(prev => addToHistory(prev, editingId, oldBanner.image));
+        }
         await updateBanner(editingId, payload);
         toast.success('Banner updated');
       } else {
@@ -202,25 +220,14 @@ export default function AdminBannersPage() {
     }
   };
 
-  const handleResetToDefaults = async () => {
-    if (!confirm('This will delete all current banners and restore the 2 original defaults. Are you sure?')) return;
-    setSaving(true);
+  const handleResetImage = async (bannerId: string, imageUrl: string) => {
     try {
-      // Delete all existing banners
-      for (const banner of banners) {
-        await deleteBanner(banner.id);
-      }
-      // Re-create defaults
-      for (const banner of DEFAULT_BANNERS) {
-        await createBanner(banner);
-      }
-      toast.success('Banners reset to defaults');
+      await updateBanner(bannerId, { image: imageUrl });
+      toast.success('Banner image restored');
+      setResetMenuId(null);
       await fetchBanners();
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to reset banners');
-    } finally {
-      setSaving(false);
+    } catch {
+      toast.error('Failed to restore image');
     }
   };
 
@@ -248,16 +255,11 @@ export default function AdminBannersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-heading font-bold text-earth-800">Homepage Banners</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={handleResetToDefaults} leftIcon={<RotateCcw className="h-4 w-4" />} disabled={saving}>
-            Reset to Defaults
+        {!showForm && (
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={openNewForm}>
+            New Banner
           </Button>
-          {!showForm && (
-            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={openNewForm}>
-              New Banner
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Transition Interval */}
@@ -291,52 +293,16 @@ export default function AdminBannersPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Title"
-              value={form.title}
-              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              placeholder="e.g. Assam in Dallas"
-            />
-            <Select
-              label="Language"
-              value={form.lang}
-              onChange={e => setForm(f => ({ ...f, lang: e.target.value as 'en' | 'as' }))}
-              options={[
-                { value: 'en', label: 'English' },
-                { value: 'as', label: 'Assamese' },
-              ]}
-            />
+            <Input label="Title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Assam in Dallas" />
+            <Select label="Language" value={form.lang} onChange={e => setForm(f => ({ ...f, lang: e.target.value as 'en' | 'as' }))} options={[{ value: 'en', label: 'English' }, { value: 'as', label: 'Assamese' }]} />
             <div className="md:col-span-2">
-              <Textarea
-                label="Description"
-                value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Banner description text..."
-                rows={3}
-              />
+              <Textarea label="Description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Banner description text..." rows={3} />
             </div>
             <div className="md:col-span-2">
-              <FileUploadField
-                label="Banner Image"
-                value={form.image}
-                onChange={(url) => setForm(f => ({ ...f, image: url }))}
-                type="image"
-                storagePath="banners"
-                helperText="Upload an image or paste a URL (e.g. /images/banners/bg-1.png)"
-              />
+              <FileUploadField label="Banner Image" value={form.image} onChange={(url) => setForm(f => ({ ...f, image: url }))} type="image" storagePath="banners" helperText="Upload an image or paste a URL" />
             </div>
-            <Input
-              label="CTA Text (optional)"
-              value={form.ctaText}
-              onChange={e => setForm(f => ({ ...f, ctaText: e.target.value }))}
-              placeholder="e.g. Learn More"
-            />
-            <Input
-              label="CTA Link (optional)"
-              value={form.ctaLink}
-              onChange={e => setForm(f => ({ ...f, ctaLink: e.target.value }))}
-              placeholder="e.g. /events"
-            />
+            <Input label="CTA Text (optional)" value={form.ctaText} onChange={e => setForm(f => ({ ...f, ctaText: e.target.value }))} placeholder="e.g. Learn More" />
+            <Input label="CTA Link (optional)" value={form.ctaLink} onChange={e => setForm(f => ({ ...f, ctaLink: e.target.value }))} placeholder="e.g. /events" />
             <div className="md:col-span-2 border-t border-earth-200 pt-4 mt-2">
               <p className="text-sm font-medium text-earth-700 mb-3">Visibility</p>
               <div className="flex flex-wrap gap-6">
@@ -357,39 +323,15 @@ export default function AdminBannersPage() {
             <div className="md:col-span-2 border-t border-earth-200 pt-4 mt-2">
               <p className="text-sm font-medium text-earth-700 mb-3">Title Position Offset (inches)</p>
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Up/Down"
-                  type="number"
-                  value={form.titleOffsetTop}
-                  onChange={e => setForm(f => ({ ...f, titleOffsetTop: parseFloat(e.target.value) || 0 }))}
-                  helperText="Positive = down, Negative = up"
-                />
-                <Input
-                  label="Left/Right"
-                  type="number"
-                  value={form.titleOffsetLeft}
-                  onChange={e => setForm(f => ({ ...f, titleOffsetLeft: parseFloat(e.target.value) || 0 }))}
-                  helperText="Positive = right, Negative = left"
-                />
+                <Input label="Up/Down" type="number" value={form.titleOffsetTop} onChange={e => setForm(f => ({ ...f, titleOffsetTop: parseFloat(e.target.value) || 0 }))} helperText="Positive = down, Negative = up" />
+                <Input label="Left/Right" type="number" value={form.titleOffsetLeft} onChange={e => setForm(f => ({ ...f, titleOffsetLeft: parseFloat(e.target.value) || 0 }))} helperText="Positive = right, Negative = left" />
               </div>
             </div>
             <div className="md:col-span-2 border-t border-earth-200 pt-4">
               <p className="text-sm font-medium text-earth-700 mb-3">Description Position Offset (inches)</p>
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Up/Down"
-                  type="number"
-                  value={form.descOffsetTop}
-                  onChange={e => setForm(f => ({ ...f, descOffsetTop: parseFloat(e.target.value) || 0 }))}
-                  helperText="Positive = down, Negative = up"
-                />
-                <Input
-                  label="Left/Right"
-                  type="number"
-                  value={form.descOffsetLeft}
-                  onChange={e => setForm(f => ({ ...f, descOffsetLeft: parseFloat(e.target.value) || 0 }))}
-                  helperText="Positive = right, Negative = left"
-                />
+                <Input label="Up/Down" type="number" value={form.descOffsetTop} onChange={e => setForm(f => ({ ...f, descOffsetTop: parseFloat(e.target.value) || 0 }))} helperText="Positive = down, Negative = up" />
+                <Input label="Left/Right" type="number" value={form.descOffsetLeft} onChange={e => setForm(f => ({ ...f, descOffsetLeft: parseFloat(e.target.value) || 0 }))} helperText="Positive = right, Negative = left" />
               </div>
             </div>
             <div className="md:col-span-2 border-t border-earth-200 pt-4">
@@ -399,20 +341,10 @@ export default function AdminBannersPage() {
                 <Input label="Left/Right" type="number" value={form.dividerOffsetLeft} onChange={e => setForm(f => ({ ...f, dividerOffsetLeft: parseFloat(e.target.value) || 0 }))} helperText="Positive = right, Negative = left" />
               </div>
             </div>
-            <Input
-              label="Order"
-              type="number"
-              value={form.order}
-              onChange={e => setForm(f => ({ ...f, order: parseInt(e.target.value) || 0 }))}
-            />
+            <Input label="Order" type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: parseInt(e.target.value) || 0 }))} />
             <div className="flex items-end pb-1">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))}
-                  className="h-4 w-4 rounded border-earth-300 text-gamosa-500 focus:ring-gamosa-500"
-                />
+                <input type="checkbox" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="h-4 w-4 rounded border-earth-300 text-gamosa-500 focus:ring-gamosa-500" />
                 <span className="text-sm font-medium text-earth-700">Active</span>
               </label>
             </div>
@@ -422,9 +354,7 @@ export default function AdminBannersPage() {
             <Button onClick={handleSave} isLoading={saving}>
               {editingId ? 'Update Banner' : 'Create Banner'}
             </Button>
-            <Button variant="ghost" onClick={closeForm} disabled={saving}>
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={closeForm} disabled={saving}>Cancel</Button>
           </div>
         </Card>
       )}
@@ -439,83 +369,100 @@ export default function AdminBannersPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {banners.map(banner => (
-            <Card key={banner.id} className="flex items-center gap-4">
-              {/* Thumbnail */}
-              <div className="w-24 h-16 rounded-lg overflow-hidden bg-earth-100 border border-earth-200 shrink-0 relative">
-                {banner.image ? (
-                  <Image
-                    src={banner.image}
-                    alt={banner.title}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-r from-gamosa-100 to-muga-100" />
-                )}
-              </div>
+          {banners.map((banner, index) => {
+            const isProtected = index < 2;
+            const history = (imageHistory[banner.id] || []).filter(url => url !== banner.image);
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-earth-800 truncate">{banner.title}</h3>
-                <p className="text-xs text-earth-500 truncate max-w-md">
-                  {banner.description || 'No description'}
-                </p>
-                <p className="text-xs text-earth-400 mt-0.5">Order: {banner.order}</p>
-              </div>
+            return (
+              <Card key={banner.id} className="flex items-center gap-4">
+                {/* Thumbnail */}
+                <div className="w-24 h-16 rounded-lg overflow-hidden bg-earth-100 border border-earth-200 shrink-0 relative">
+                  {banner.image ? (
+                    <Image src={banner.image} alt={banner.title} fill className="object-cover" unoptimized />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-gamosa-100 to-muga-100" />
+                  )}
+                </div>
 
-              {/* Badges */}
-              <div className="flex items-center gap-2 shrink-0">
-                <Badge variant={banner.lang === 'as' ? 'muga' : 'outline'}>
-                  {banner.lang === 'as' ? 'Assamese' : 'English'}
-                </Badge>
-                <Badge variant={banner.isActive ? 'tea' : 'default'}>
-                  {banner.isActive ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-earth-800 truncate">{banner.title}</h3>
+                  <p className="text-xs text-earth-500 truncate max-w-md">{banner.description || 'No description'}</p>
+                  <p className="text-xs text-earth-400 mt-0.5">Order: {banner.order}</p>
+                </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openEditForm(banner)}
-                  aria-label="Edit banner"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                {/* Badges */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant={banner.lang === 'as' ? 'muga' : 'outline'}>
+                    {banner.lang === 'as' ? 'Assamese' : 'English'}
+                  </Badge>
+                  <Badge variant={banner.isActive ? 'tea' : 'default'}>
+                    {banner.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
 
-                {deleteConfirmId === banner.id ? (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleDelete(banner.id)}
-                    >
-                      Confirm
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteConfirmId(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeleteConfirmId(banner.id)}
-                    aria-label="Delete banner"
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                {/* Actions */}
+                <div className="flex items-center gap-1 shrink-0 relative">
+                  {/* Reset to previous image */}
+                  {history.length > 0 && (
+                    <div className="relative">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setResetMenuId(resetMenuId === banner.id ? null : banner.id)}
+                        title="Restore previous image"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                      {resetMenuId === banner.id && (
+                        <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-earth-200 rounded-lg shadow-lg p-2 min-w-[200px]">
+                          <p className="text-xs font-medium text-earth-500 mb-2 px-1">Restore image to:</p>
+                          {history.map((url, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleResetImage(banner.id, url)}
+                              className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-earth-700 hover:bg-earth-50 rounded transition-colors"
+                            >
+                              <div className="w-10 h-7 rounded overflow-hidden bg-earth-100 shrink-0 relative">
+                                <Image src={url} alt="" fill className="object-cover" unoptimized />
+                              </div>
+                              <span className="truncate">{url.split('/').pop()}</span>
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setResetMenuId(null)}
+                            className="w-full text-xs text-earth-400 hover:text-earth-600 mt-1 px-2 py-1"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <Button variant="ghost" size="sm" onClick={() => openEditForm(banner)} aria-label="Edit banner">
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                )}
-              </div>
-            </Card>
-          ))}
+
+                  {/* Only show delete for banners after the first 2 */}
+                  {!isProtected && (
+                    <>
+                      {deleteConfirmId === banner.id ? (
+                        <div className="flex items-center gap-1">
+                          <Button variant="danger" size="sm" onClick={() => handleDelete(banner.id)}>Confirm</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+                        </div>
+                      ) : (
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(banner.id)} aria-label="Delete banner">
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
