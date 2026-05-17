@@ -8,13 +8,12 @@ import { Input } from '@/components/ui/Input';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Spinner } from '@/components/ui/Spinner';
 import { FileUploadField } from '@/components/admin/FileUploadField';
-import { ImageCropEditor, type CropData } from '@/components/admin/ImageCropEditor';
 import { RotateCcw } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 const communityFields: (keyof SiteConfig)[] = [
-  'communityTitle', 'communityDescription', 'communityImage', 'communityImageVisible', 'communityImageCrop',
+  'communityTitle', 'communityDescription', 'communityImage',
   'highlightPerformersTitle', 'highlightPerformersDescription',
   'highlightCommunityTitle', 'highlightCommunityDescription',
 ];
@@ -121,40 +120,14 @@ export default function AdminCommunityPage() {
               <RichTextEditor content={config.communityDescription || ''} onChange={(html) => handleChange('communityDescription', html)} />
             </div>
             <div className="sm:col-span-2">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-earth-700">Header Image</label>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setConfig(prev => prev ? { ...prev, communityImageVisible: !prev.communityImageVisible } : prev)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${config.communityImageVisible !== false ? 'bg-gamosa-500' : 'bg-earth-300'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${config.communityImageVisible !== false ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                  <span className="text-sm text-earth-600">{config.communityImageVisible !== false ? 'Visible' : 'Hidden'}</span>
-                </div>
-              </div>
               <FileUploadField
-                label=""
+                label="Header Image"
                 value={config.communityImage || ''}
-                onChange={(url) => {
-                  handleChange('communityImage', url);
-                  // Clear crop data when image changes
-                  if (!url) handleChange('communityImageCrop', '');
-                }}
+                onChange={(url) => handleChange('communityImage', url)}
                 type="image"
                 storagePath="site/community"
                 helperText="Banner image shown at the top of the Community page"
               />
-              {config.communityImage && (
-                <div className="mt-4">
-                  <ImageCropEditor
-                    imageUrl={config.communityImage}
-                    cropData={config.communityImageCrop ? JSON.parse(config.communityImageCrop) as CropData : null}
-                    onChange={(data) => handleChange('communityImageCrop', JSON.stringify(data))}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </Card>

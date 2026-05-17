@@ -17,10 +17,6 @@ export interface SiteConfig {
   // Banner settings
   bannerTransitionInterval?: number; // seconds between slides
 
-  // Homepage animations
-  homepageAnimation?: string;          // e.g. 'flying_birds' or '' for none
-  homepageAnimationEnabled?: boolean;  // master toggle
-
   // Quick Stats
   statMembers: number;
   statEvents: number;
@@ -37,8 +33,6 @@ export interface SiteConfig {
   communityTitle?: string;
   communityDescription?: string;
   communityImage?: string;
-  communityImageVisible?: boolean;
-  communityImageCrop?: string; // JSON: {x, y, width, height, zoom} — crop metadata
 
   // About page
   aboutTitle?: string;
@@ -46,9 +40,7 @@ export interface SiteConfig {
   aboutStoryTitle?: string;
   aboutStoryParagraph1?: string;
   aboutStoryParagraph2?: string;
-  aboutStoryContent?: string; // Rich text (replaces paragraph1+2)
   aboutMission?: string;
-  aboutValues?: string; // JSON array of {title, description}
   aboutValue1Title?: string;
   aboutValue1Description?: string;
   aboutValue2Title?: string;
@@ -89,8 +81,6 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   highlightCommunityTitle: 'Growing Community',
   highlightCommunityDescription:
     'Families from across the United States come together to celebrate our rich Assamese heritage, creating lasting bonds and passing traditions to the next generation.',
-  homepageAnimation: 'flying_birds',
-  homepageAnimationEnabled: true,
   donationsEnabled: true,
   donationGoal: 10000,
   donationMessage: 'Your generous donation helps us preserve Assamese culture and organize community events across the USA.',
