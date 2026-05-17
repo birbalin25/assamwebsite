@@ -38,7 +38,6 @@ export interface SiteConfig {
   communityDescription?: string;
   communityImage?: string;
   communityImageVisible?: boolean;
-  communityImageCrop?: string; // JSON: {x, y, width, height, zoom} — crop metadata
 
   // About page
   aboutTitle?: string;

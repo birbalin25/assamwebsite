@@ -8,13 +8,12 @@ import { Input } from '@/components/ui/Input';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { Spinner } from '@/components/ui/Spinner';
 import { FileUploadField } from '@/components/admin/FileUploadField';
-import { ImageCropEditor, type CropData } from '@/components/admin/ImageCropEditor';
 import { RotateCcw } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'sonner';
 
 const communityFields: (keyof SiteConfig)[] = [
-  'communityTitle', 'communityDescription', 'communityImage', 'communityImageVisible', 'communityImageCrop',
+  'communityTitle', 'communityDescription', 'communityImage', 'communityImageVisible',
   'highlightPerformersTitle', 'highlightPerformersDescription',
   'highlightCommunityTitle', 'highlightCommunityDescription',
 ];
@@ -137,24 +136,11 @@ export default function AdminCommunityPage() {
               <FileUploadField
                 label=""
                 value={config.communityImage || ''}
-                onChange={(url) => {
-                  handleChange('communityImage', url);
-                  // Clear crop data when image changes
-                  if (!url) handleChange('communityImageCrop', '');
-                }}
+                onChange={(url) => handleChange('communityImage', url)}
                 type="image"
                 storagePath="site/community"
                 helperText="Banner image shown at the top of the Community page"
               />
-              {config.communityImage && (
-                <div className="mt-4">
-                  <ImageCropEditor
-                    imageUrl={config.communityImage}
-                    cropData={config.communityImageCrop ? JSON.parse(config.communityImageCrop) as CropData : null}
-                    onChange={(data) => handleChange('communityImageCrop', JSON.stringify(data))}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </Card>
