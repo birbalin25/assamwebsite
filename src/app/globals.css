@@ -57,6 +57,17 @@
 }
 
 /* Base styles */
+
+/* Slightly larger root font on mobile so rem-based text scales up */
+html {
+  font-size: 17px;
+}
+@media (min-width: 1024px) {
+  html {
+    font-size: 16px;
+  }
+}
+
 body {
   background-color: var(--color-earth-50);
   color: var(--color-earth-800);

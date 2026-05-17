@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getSiteConfig } from '@/lib/services/siteConfig';
 
 interface Bird {
   id: number;
@@ -38,7 +37,6 @@ function BirdSvg({ size, flapSpeed }: { size: number; flapSpeed: number }) {
       fill="none"
       style={{ overflow: 'visible' }}
     >
-      {/* Left wing — rotates from body center-right */}
       <g
         style={{
           transformOrigin: '18px 13px',
@@ -53,7 +51,6 @@ function BirdSvg({ size, flapSpeed }: { size: number; flapSpeed: number }) {
           fill="none"
         />
       </g>
-      {/* Right wing — rotates from body center-left */}
       <g
         style={{
           transformOrigin: '18px 13px',
@@ -69,48 +66,17 @@ function BirdSvg({ size, flapSpeed }: { size: number; flapSpeed: number }) {
           fill="none"
         />
       </g>
-      {/* Body */}
       <ellipse cx="18" cy="13.5" rx="2.4" ry="1.4" fill="currentColor" />
-      {/* Head */}
       <circle cx="15.8" cy="12.5" r="0.9" fill="currentColor" />
     </svg>
   );
 }
 
 export function FlyingBirds() {
-  const [birds, setBirds] = useState<Bird[]>([]);
-  const [visible, setVisible] = useState(true);
-  const [enabled, setEnabled] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    getSiteConfig().then(config => {
-      if (config.homepageAnimationEnabled === false || config.homepageAnimation === '') {
-        setEnabled(false);
-      } else {
-        setEnabled(true);
-        setBirds(generateBirds(7));
-      }
-    }).catch(() => {
-      // Fallback: show birds if config fails
-      setEnabled(true);
-      setBirds(generateBirds(7));
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!enabled) return;
-    const timer = setTimeout(() => setVisible(false), 35000);
-    return () => clearTimeout(timer);
-  }, [enabled]);
-
-  if (!enabled || !visible || birds.length === 0) return null;
+  const [birds] = useState<Bird[]>(() => generateBirds(7));
 
   return (
-    <div
-      className="fixed inset-0 pointer-events-none overflow-hidden"
-      style={{ zIndex: 40 }}
-      aria-hidden="true"
-    >
+    <>
       <style>{`
         @keyframes birdFly {
           from { transform: translateX(0) translateY(0); }
@@ -164,6 +130,6 @@ export function FlyingBirds() {
           </div>
         );
       })}
-    </div>
+    </>
   );
 }

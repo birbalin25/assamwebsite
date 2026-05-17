@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# temporary screenshots & test scripts
+*.png
+capture_*.py
+capture_*.js
+test-*.js
