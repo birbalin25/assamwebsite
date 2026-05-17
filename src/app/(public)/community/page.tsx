@@ -17,6 +17,7 @@ export default function CommunityPage() {
   const [title, setTitle] = useState(defaultTitle);
   const [description, setDescription] = useState(defaultDescription);
   const [headerImage, setHeaderImage] = useState<string | undefined>();
+  const [cropData, setCropData] = useState<{ x: number; y: number; width: number; height: number; zoom: number } | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -28,7 +29,12 @@ export default function CommunityPage() {
 
         if (config.communityTitle) setTitle(config.communityTitle);
         if (config.communityDescription) setDescription(config.communityDescription);
-        if (config.communityImage) setHeaderImage(config.communityImage);
+        if (config.communityImage && config.communityImageVisible !== false) {
+          setHeaderImage(config.communityImage);
+          if (config.communityImageCrop) {
+            try { setCropData(JSON.parse(config.communityImageCrop)); } catch { /* ignore invalid JSON */ }
+          }
+        }
 
         const mapped = result.map((member: WithId<Member>) => ({
           id: member.id,
@@ -57,9 +63,17 @@ export default function CommunityPage() {
       />
       {headerImage && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
-          <div className="rounded-xl overflow-hidden shadow-lg">
+          <div className="rounded-xl overflow-hidden shadow-lg bg-earth-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={headerImage} alt={title} className="w-full h-64 object-cover" />
+            <img
+              src={headerImage}
+              alt={title}
+              className="w-full h-auto max-h-[60vh] object-contain sm:object-cover sm:h-64 md:h-72 lg:h-80"
+              style={cropData ? {
+                objectPosition: `${cropData.x + cropData.width / 2}% ${cropData.y + cropData.height / 2}%`,
+                transform: cropData.zoom > 1 ? `scale(${cropData.zoom})` : undefined,
+              } : undefined}
+            />
           </div>
         </div>
       )}
