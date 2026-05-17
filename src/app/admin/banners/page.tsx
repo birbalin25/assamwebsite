@@ -57,6 +57,16 @@ const emptyForm: BannerFormData = {
   showDivider: false,
 };
 
+const ANIMATION_OPTIONS = [
+  { value: 'flying_birds', label: 'Flying Birds' },
+  { value: 'floating_lanterns', label: 'Floating Lanterns' },
+  { value: 'fireflies', label: 'Fireflies' },
+  { value: 'falling_tea_leaves', label: 'Falling Tea Leaves' },
+  { value: 'flowing_river', label: 'Flowing River' },
+  { value: 'confetti_burst', label: 'Confetti Burst' },
+  { value: 'twinkling_stars', label: 'Twinkling Stars' },
+] as const;
+
 // Track last 3 images per banner for "Reset to" feature
 type ImageHistory = Record<string, string[]>;
 
@@ -321,13 +331,9 @@ export default function AdminBannersPage() {
               disabled={!animationEnabled}
               className="block w-full text-sm rounded-lg border border-earth-300 px-3.5 py-2.5 text-earth-800 bg-white focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="flying_birds">Flying Birds</option>
-              <option value="floating_lanterns">Floating Lanterns</option>
-              <option value="fireflies">Fireflies</option>
-              <option value="falling_tea_leaves">Falling Tea Leaves</option>
-              <option value="flowing_river">Flowing River</option>
-              <option value="confetti_burst">Confetti Burst</option>
-              <option value="twinkling_stars">Twinkling Stars</option>
+              {ANIMATION_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
             <p className="text-xs text-earth-400 mt-1">Plays once when visitors open the homepage</p>
           </div>
@@ -557,7 +563,7 @@ export default function AdminBannersPage() {
         onConfirm={() => { setShowSaveAnimationConfirm(false); handleSaveAnimation(); }}
         title="Save Animation Settings"
         message={animationEnabled ? `Enable "${
-          { flying_birds: 'Flying Birds', floating_lanterns: 'Floating Lanterns', fireflies: 'Fireflies', falling_tea_leaves: 'Falling Tea Leaves', flowing_river: 'Flowing River', confetti_burst: 'Confetti Burst', twinkling_stars: 'Twinkling Stars' }[selectedAnimation] || selectedAnimation
+          ANIMATION_OPTIONS.find(o => o.value === selectedAnimation)?.label || selectedAnimation
         }" animation on the homepage?` : 'Disable homepage animation?'}
         confirmLabel="Save"
         confirmVariant="primary"
