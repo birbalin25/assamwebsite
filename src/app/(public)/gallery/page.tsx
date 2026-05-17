@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { FolderOpen } from 'lucide-react';
+import { FilterBar } from '@/components/shared/FilterBar';
 import { getPublishedAlbums } from '@/lib/services/albums';
 import { getMediaCountByAlbumId } from '@/lib/services/media';
 import type { Album, WithId } from '@/types';
@@ -17,6 +18,7 @@ interface AlbumWithCount extends WithId<Album> {
 export default function GalleryPage() {
   const [albums, setAlbums] = useState<AlbumWithCount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterYear, setFilterYear] = useState('');
 
   useEffect(() => {
     async function fetchAlbums() {
@@ -57,9 +59,22 @@ export default function GalleryPage() {
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-heading font-bold text-earth-800 mb-8">Albums</h2>
+              <h2 className="text-2xl font-heading font-bold text-earth-800 mb-6">Albums</h2>
+              {(() => {
+                const yearOpts = [...new Set(albums.map(a => a.year).filter((y): y is number => !!y))].sort((a, b) => b - a);
+                return yearOpts.length > 1 ? (
+                  <div className="mb-8">
+                    <FilterBar
+                      filters={yearOpts.map(y => ({ value: String(y), label: String(y) }))}
+                      activeFilter={filterYear}
+                      onFilterChange={setFilterYear}
+                      allLabel="All Years"
+                    />
+                  </div>
+                ) : null;
+              })()}
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {albums.map((album) => (
+                {albums.filter(a => !filterYear || a.year === Number(filterYear)).map((album) => (
                   <Link key={album.id} href={`/gallery/albums/${album.slug}`}>
                     <Card hover padding="none" className="group overflow-hidden">
                       <div className="relative h-48 bg-gradient-to-br from-muga-100 to-gamosa-100 flex items-center justify-center overflow-hidden">

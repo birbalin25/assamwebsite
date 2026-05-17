@@ -110,12 +110,15 @@ export function HeroSection() {
     }
   }, []);
 
+  const [paused, setPaused] = useState(false);
+
   useEffect(() => {
+    if (paused) return;
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % slides.length);
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [slides.length, intervalMs]);
+  }, [slides.length, intervalMs, paused]);
 
   const goTo = (index: number) => {
     setCurrent((index + slides.length) % slides.length);
@@ -141,6 +144,11 @@ export function HeroSection() {
         ref={sectionRef}
         className="relative overflow-hidden bg-[#FAF6F0]"
         style={{ height: 'calc(100vh - 80px)', minHeight: '550px' }}
+        onMouseDown={() => setPaused(true)}
+        onMouseUp={() => setPaused(false)}
+        onMouseLeave={() => setPaused(false)}
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => setPaused(false)}
       >
         {/* Background Image */}
         <AnimatePresence mode="wait">
@@ -164,10 +172,24 @@ export function HeroSection() {
           </motion.div>
         </AnimatePresence>
 
+        {/* Offset styles — only apply left offsets on md+ screens */}
+        <style>{`
+          .hero-offset {
+            top: 0;
+            left: 0;
+          }
+          @media (min-width: 768px) {
+            .hero-offset {
+              top: var(--offset-top, 0px);
+              left: var(--offset-left, 0px);
+            }
+          }
+        `}</style>
+
         {/* Content overlay */}
         <div className="absolute inset-0 z-10">
-          {/* Title + Description — 12% from top */}
-          <div className="absolute left-1/2 -translate-x-1/2" style={{ top: '12%', width: '90%', maxWidth: '650px' }}>
+          {/* Title + Description — pushed down on mobile, higher on desktop */}
+          <div className="absolute left-1/2 -translate-x-1/2 px-4 sm:px-0 top-[18%] sm:top-[14%] md:top-[12%]" style={{ width: '92%', maxWidth: '650px' }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`content-${current}`}
@@ -179,22 +201,21 @@ export function HeroSection() {
               >
                 {slide.showTitle !== false && (
                   <h1
-                    className="font-heading font-extrabold leading-none mb-1 relative"
+                    className="font-heading font-extrabold leading-tight mb-1 relative hero-offset whitespace-nowrap"
                     style={{
-                      whiteSpace: 'nowrap',
-                      top: slide.titleOffset?.top ? `${slide.titleOffset.top * 96}px` : undefined,
-                      left: slide.titleOffset?.left ? `${slide.titleOffset.left * 96}px` : undefined,
-                    }}
+                      '--offset-top': slide.titleOffset?.top ? `${slide.titleOffset.top * 96}px` : '0px',
+                      '--offset-left': slide.titleOffset?.left ? `${slide.titleOffset.left * 96}px` : '0px',
+                    } as React.CSSProperties}
                   >
                     <span
                       className="text-gamosa-600 drop-shadow-sm tracking-tight"
-                      style={{ fontSize: 'clamp(1.8rem, 5vw, 3.5rem)' }}
+                      style={{ fontSize: 'clamp(1.25rem, 5vw, 3.5rem)' }}
                     >
                       {slide.title || 'Assam in Dallas'}
                     </span>
                     <span
-                      className="text-muga-500 font-bold italic ml-2"
-                      style={{ fontSize: 'clamp(1.2rem, 3vw, 2.2rem)' }}
+                      className="text-muga-500 font-bold italic ml-1 sm:ml-2"
+                      style={{ fontSize: 'clamp(0.85rem, 3vw, 2.2rem)' }}
                     >
                       USA
                     </span>
@@ -203,11 +224,11 @@ export function HeroSection() {
 
                 {slide.showDivider === true && (
                   <div
-                    className="flex items-center gap-1.5 justify-center mb-2 mt-2 relative"
+                    className="flex items-center gap-1.5 justify-center mb-2 mt-2 relative hero-offset"
                     style={{
-                      top: slide.dividerOffset?.top ? `${slide.dividerOffset.top * 96}px` : undefined,
-                      left: slide.dividerOffset?.left ? `${slide.dividerOffset.left * 96}px` : undefined,
-                    }}
+                      '--offset-top': slide.dividerOffset?.top ? `${slide.dividerOffset.top * 96}px` : '0px',
+                      '--offset-left': slide.dividerOffset?.left ? `${slide.dividerOffset.left * 96}px` : '0px',
+                    } as React.CSSProperties}
                   >
                     <div className="h-[3px] w-10 bg-gamosa-500 rounded-full" />
                     <div className="h-[3px] w-6 bg-muga-500 rounded-full" />
@@ -219,17 +240,17 @@ export function HeroSection() {
 
                 {slide.showDescription !== false && (
                   <div
-                    className={`text-earth-700 relative ${
+                    className={`text-earth-700 relative hero-offset ${
                       slide.lang === 'as'
                         ? 'font-assamese'
                         : 'font-heading font-medium italic'
                     }`}
                     style={{
-                      fontSize: 'clamp(0.75rem, 1.6vw, 1.1rem)',
+                      fontSize: 'clamp(0.7rem, 1.6vw, 1.1rem)',
                       lineHeight: 1.7,
-                      top: slide.descriptionOffset?.top ? `${slide.descriptionOffset.top * 96}px` : undefined,
-                      left: slide.descriptionOffset?.left ? `${slide.descriptionOffset.left * 96}px` : undefined,
-                    }}
+                      '--offset-top': slide.descriptionOffset?.top ? `${slide.descriptionOffset.top * 96}px` : '0px',
+                      '--offset-left': slide.descriptionOffset?.left ? `${slide.descriptionOffset.left * 96}px` : '0px',
+                    } as React.CSSProperties}
                     dangerouslySetInnerHTML={{ __html: slide.description }}
                   />
                 )}

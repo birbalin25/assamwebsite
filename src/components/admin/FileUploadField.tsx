@@ -7,6 +7,7 @@ import imageCompression from 'browser-image-compression';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getFirebaseStorage } from '@/lib/firebase/client';
 import { cn } from '@/lib/utils/cn';
+import { VideoThumbnail } from '@/components/admin/VideoThumbnail';
 
 interface FileUploadFieldProps {
   label: string;
@@ -190,9 +191,9 @@ export function FileUploadField({
               <img src={value} alt="" className="w-full h-full object-contain" />
             </div>
           ) : isVideoValue ? (
-            <div className="relative w-full h-40 rounded-lg overflow-hidden bg-earth-900 border border-earth-200 flex items-center justify-center">
-              <Film className="h-10 w-10 text-earth-400" />
-              <p className="text-earth-400 text-xs ml-2 max-w-[200px] truncate">{value}</p>
+            <div className="relative w-full h-40 rounded-lg overflow-hidden bg-earth-900 border border-earth-200 flex flex-col items-center justify-center gap-2">
+              <VideoThumbnail url={value} className="w-40 h-28" />
+              <p className="text-earth-400 text-xs max-w-[200px] truncate">{value}</p>
             </div>
           ) : (
             <div className="relative w-full h-20 rounded-lg bg-earth-100 border border-earth-200 flex items-center px-4">

@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PerformanceGrid } from '@/components/performances/PerformanceGrid';
-import { PerformanceVideoGrid } from '@/components/performances/PerformanceVideoGrid';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { Spinner } from '@/components/ui/Spinner';
 import { getPublishedPerformances } from '@/lib/services/performances';
@@ -33,7 +32,6 @@ export default function PerformancesPage() {
   const [performances, setPerformances] = useState<MappedPerformance[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('');
-  const [activeMediaType, setActiveMediaType] = useState('images');
   const [activeEventType, setActiveEventType] = useState(searchParams.get('eventType') || '');
   const [activeYear, setActiveYear] = useState(searchParams.get('year') || '');
   const [allEventTypes, setAllEventTypes] = useState<Set<string>>(new Set());
@@ -109,8 +107,6 @@ export default function PerformancesPage() {
     if (activeCategory && p.category !== activeCategory) return false;
     if (activeEventType && p.eventType !== activeEventType) return false;
     if (activeYear && p.eventYear !== Number(activeYear)) return false;
-    if (activeMediaType === 'images' && !(p.thumbnailUrl || (p.galleryImages && p.galleryImages.length > 0))) return false;
-    if (activeMediaType === 'videos' && !(p.videoUrl || (p.videos && p.videos.length > 0))) return false;
     return true;
   });
 
@@ -134,12 +130,6 @@ export default function PerformancesPage() {
           ) : (
             <>
               <div className="mb-8 space-y-4">
-                <FilterBar
-                  filters={[{ value: 'images', label: 'Images' }, { value: 'videos', label: 'Videos' }]}
-                  activeFilter={activeMediaType}
-                  onFilterChange={setActiveMediaType}
-                  allLabel="All"
-                />
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center gap-2">
                     <label htmlFor="event-type-filter" className="text-sm font-medium text-earth-700">
@@ -180,11 +170,7 @@ export default function PerformancesPage() {
                   onFilterChange={setActiveCategory}
                 />
               </div>
-              {activeMediaType === 'videos' ? (
-                <PerformanceVideoGrid performances={filtered} />
-              ) : (
-                <PerformanceGrid performances={filtered} />
-              )}
+              <PerformanceGrid performances={filtered} />
             </>
           )}
         </div>

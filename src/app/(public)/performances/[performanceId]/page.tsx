@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 import { Play, Users, Calendar } from 'lucide-react';
 import { PhotoLightbox } from '@/components/gallery/PhotoLightbox';
+import { FilterBar } from '@/components/shared/FilterBar';
 import { getPerformanceById } from '@/lib/services/performances';
 import { getEventById } from '@/lib/services/events';
 import type { Performance, WithId } from '@/types';
@@ -20,6 +21,7 @@ export default function PerformanceDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [activeMediaFilter, setActiveMediaFilter] = useState('');
 
   useEffect(() => {
     async function fetchData() {
@@ -76,6 +78,13 @@ export default function PerformanceDetailPage() {
 
   const performerNames = performance.performers.map(p => p.name).join(', ');
 
+  const imageCount = (performance.galleryImages?.length || 0);
+  const videoCount = (performance.videoUrl ? 1 : 0) + (performance.videos?.length || 0);
+  const hasImages = imageCount > 0;
+  const hasVideos = videoCount > 0;
+  const showImages = activeMediaFilter === '' || activeMediaFilter === 'images';
+  const showVideos = activeMediaFilter === '' || activeMediaFilter === 'videos';
+
   return (
     <>
       <PageHeader
@@ -92,27 +101,7 @@ export default function PerformanceDetailPage() {
             <Badge variant="outline">{performance.type}</Badge>
           </div>
 
-          {performance.videoUrl ? (
-            <div className="aspect-video mb-8 rounded-xl overflow-hidden">
-              <iframe
-                src={performance.videoUrl.replace('watch?v=', 'embed/')}
-                className="w-full h-full"
-                allowFullScreen
-                title={performance.title}
-              />
-            </div>
-          ) : (
-            <div className="aspect-video bg-earth-100 rounded-xl mb-8 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto rounded-full bg-gamosa-500 flex items-center justify-center mb-3">
-                  <Play className="h-8 w-8 text-white ml-1" />
-                </div>
-                <p className="text-earth-500 text-sm">Video not available</p>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-4">
+          <div className="space-y-4 mb-8">
             {eventName && (
               <div className="flex items-center gap-3 text-earth-600">
                 <Calendar className="h-5 w-5 text-muga-500" />
@@ -129,14 +118,59 @@ export default function PerformanceDetailPage() {
 
           {performance.description && (
             <div
-              className="prose prose-earth max-w-none mt-6"
+              className="prose prose-earth max-w-none mb-8"
               dangerouslySetInnerHTML={{ __html: performance.description }}
             />
           )}
 
-          {performance.galleryImages && performance.galleryImages.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-xl font-heading font-semibold text-earth-800 mb-4">Gallery</h2>
+          {/* Media filter */}
+          {(hasImages || hasVideos) && (
+            <div className="mb-6">
+              <FilterBar
+                filters={[
+                  ...(hasImages ? [{ value: 'images', label: `Images (${imageCount})` }] : []),
+                  ...(hasVideos ? [{ value: 'videos', label: `Videos (${videoCount})` }] : []),
+                ]}
+                activeFilter={activeMediaFilter}
+                onFilterChange={setActiveMediaFilter}
+                allLabel="All"
+              />
+            </div>
+          )}
+
+          {/* Videos section */}
+          {showVideos && performance.videoUrl && (
+            <div className="mb-6">
+              <div className="aspect-video rounded-xl overflow-hidden">
+                <iframe
+                  src={performance.videoUrl.replace('watch?v=', 'embed/')}
+                  className="w-full h-full"
+                  allowFullScreen
+                  title={performance.title}
+                />
+              </div>
+            </div>
+          )}
+
+          {showVideos && performance.videos && performance.videos.length > 0 && (
+            <div className="mb-6">
+              <div className="grid sm:grid-cols-2 gap-4">
+                {performance.videos.map((url, i) => (
+                  <div key={i} className="aspect-video rounded-lg overflow-hidden bg-earth-900">
+                    {url.includes('youtube.com') || url.includes('youtu.be') ? (
+                      <iframe src={url.replace('watch?v=', 'embed/')} className="w-full h-full" allowFullScreen />
+                    ) : (
+                      <video src={url} controls className="w-full h-full" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Images section */}
+          {showImages && performance.galleryImages && performance.galleryImages.length > 0 && (
+            <div className="mb-6">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {performance.galleryImages.map((url, i) => (
                   <div
@@ -167,20 +201,15 @@ export default function PerformanceDetailPage() {
             </div>
           )}
 
-          {performance.videos && performance.videos.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-xl font-heading font-semibold text-earth-800 mb-4">More Videos</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {performance.videos.map((url, i) => (
-                  <div key={i} className="aspect-video rounded-lg overflow-hidden bg-earth-900">
-                    {url.includes('youtube.com') || url.includes('youtu.be') ? (
-                      <iframe src={url.replace('watch?v=', 'embed/')} className="w-full h-full" allowFullScreen />
-                    ) : (
-                      <video src={url} controls className="w-full h-full" />
-                    )}
-                  </div>
-                ))}
-              </div>
+          {/* No media message when filter yields nothing */}
+          {activeMediaFilter === 'images' && !hasImages && (
+            <div className="text-center py-12">
+              <p className="text-earth-500">No images available for this performance.</p>
+            </div>
+          )}
+          {activeMediaFilter === 'videos' && !hasVideos && (
+            <div className="text-center py-12">
+              <p className="text-earth-500">No videos available for this performance.</p>
             </div>
           )}
         </div>

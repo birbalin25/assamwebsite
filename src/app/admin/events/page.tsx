@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/Badge';
@@ -17,6 +17,8 @@ export default function AdminEventsPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState('');
+  const [filterYear, setFilterYear] = useState('');
 
   const fetchEvents = async () => {
     try {
@@ -44,6 +46,16 @@ export default function AdminEventsPage() {
       setDeleteTarget(null);
     }
   };
+
+  const typeOptions = [...new Set(events.map(e => e.type))].sort();
+  const yearOptions = [...new Set(events.map(e => e.year))].sort((a, b) => b - a);
+  const hasActiveFilter = filterType || filterYear;
+
+  const filteredEvents = events.filter(e => {
+    if (filterType && e.type !== filterType) return false;
+    if (filterYear && e.year !== Number(filterYear)) return false;
+    return true;
+  });
 
   const columns = [
     { key: 'name', label: 'Name', sortable: true },
@@ -98,7 +110,28 @@ export default function AdminEventsPage() {
           <Button leftIcon={<Plus className="h-4 w-4" />}>New Event</Button>
         </Link>
       </div>
-      <DataTable columns={columns} data={events as unknown as Record<string, unknown>[]} keyField="id" />
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex items-center gap-1.5 text-sm text-earth-500">
+          <Filter className="h-4 w-4" />
+          <span className="font-medium">Filters</span>
+        </div>
+        <select value={filterType} onChange={e => setFilterType(e.target.value)} className="text-sm rounded-lg border border-earth-300 px-3 py-1.5 text-earth-700 bg-white focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500">
+          <option value="">All Types</option>
+          {typeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="text-sm rounded-lg border border-earth-300 px-3 py-1.5 text-earth-700 bg-white focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500">
+          <option value="">All Years</option>
+          {yearOptions.map(y => <option key={y} value={String(y)}>{y}</option>)}
+        </select>
+        {hasActiveFilter && (
+          <button onClick={() => { setFilterType(''); setFilterYear(''); }} className="text-xs px-2.5 py-1.5 rounded-lg text-earth-500 hover:text-earth-700 hover:bg-earth-100 transition-colors flex items-center gap-1">
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </button>
+        )}
+      </div>
+      <DataTable columns={columns} data={filteredEvents as unknown as Record<string, unknown>[]} keyField="id" />
       <ConfirmDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
