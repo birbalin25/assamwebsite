@@ -79,6 +79,10 @@ export default function AdminBannersPage() {
   const [showSaveIntervalConfirm, setShowSaveIntervalConfirm] = useState(false);
   const [transitionInterval, setTransitionInterval] = useState(15);
   const [savingInterval, setSavingInterval] = useState(false);
+  const [animationEnabled, setAnimationEnabled] = useState(true);
+  const [selectedAnimation, setSelectedAnimation] = useState('flying_birds');
+  const [savingAnimation, setSavingAnimation] = useState(false);
+  const [showSaveAnimationConfirm, setShowSaveAnimationConfirm] = useState(false);
   const [imageHistory, setImageHistory] = useState<ImageHistory>({});
   const [resetMenuId, setResetMenuId] = useState<string | null>(null);
 
@@ -104,6 +108,8 @@ export default function AdminBannersPage() {
       if (config.bannerTransitionInterval && config.bannerTransitionInterval > 0) {
         setTransitionInterval(config.bannerTransitionInterval);
       }
+      setAnimationEnabled(config.homepageAnimationEnabled !== false);
+      setSelectedAnimation(config.homepageAnimation || 'flying_birds');
     } catch (err) {
       console.error(err);
       toast.error('Failed to load banners');
@@ -251,6 +257,21 @@ export default function AdminBannersPage() {
     }
   };
 
+  const handleSaveAnimation = async () => {
+    setSavingAnimation(true);
+    try {
+      await updateSiteConfig({
+        homepageAnimation: selectedAnimation,
+        homepageAnimationEnabled: animationEnabled,
+      });
+      toast.success('Animation settings saved');
+    } catch {
+      toast.error('Failed to save animation settings');
+    } finally {
+      setSavingAnimation(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -284,6 +305,37 @@ export default function AdminBannersPage() {
           </div>
           <Button onClick={() => setShowSaveIntervalConfirm(true)} isLoading={savingInterval} size="sm">
             Save Interval
+          </Button>
+        </div>
+      </Card>
+
+      {/* Homepage Animations */}
+      <Card className="mb-6">
+        <h2 className="text-lg font-heading font-semibold text-earth-800 mb-4">Homepage Animation</h2>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-earth-700 mb-1.5">Animation</label>
+            <select
+              value={selectedAnimation}
+              onChange={(e) => setSelectedAnimation(e.target.value)}
+              disabled={!animationEnabled}
+              className="block w-full text-sm rounded-lg border border-earth-300 px-3.5 py-2.5 text-earth-800 bg-white focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="flying_birds">Flying Birds</option>
+            </select>
+            <p className="text-xs text-earth-400 mt-1">Plays once when visitors open the homepage</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setAnimationEnabled(!animationEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${animationEnabled ? 'bg-gamosa-500' : 'bg-earth-300'}`}
+            >
+              <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${animationEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+            <span className="text-sm text-earth-700">{animationEnabled ? 'Enabled' : 'Disabled'}</span>
+          </div>
+          <Button onClick={() => setShowSaveAnimationConfirm(true)} isLoading={savingAnimation} size="sm">
+            Save
           </Button>
         </div>
       </Card>
@@ -490,6 +542,15 @@ export default function AdminBannersPage() {
         onConfirm={() => { setShowSaveIntervalConfirm(false); handleSaveInterval(); }}
         title="Save Interval"
         message="Are you sure you want to update the slide transition interval?"
+        confirmLabel="Save"
+        confirmVariant="primary"
+      />
+      <ConfirmDialog
+        isOpen={showSaveAnimationConfirm}
+        onClose={() => setShowSaveAnimationConfirm(false)}
+        onConfirm={() => { setShowSaveAnimationConfirm(false); handleSaveAnimation(); }}
+        title="Save Animation Settings"
+        message={animationEnabled ? `Enable "${selectedAnimation === 'flying_birds' ? 'Flying Birds' : selectedAnimation}" animation on the homepage?` : 'Disable homepage animation?'}
         confirmLabel="Save"
         confirmVariant="primary"
       />

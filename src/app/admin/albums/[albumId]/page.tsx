@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FolderOpen, Trash2, Loader2, Camera, ZoomIn } from 'lucide-react';
+import { ArrowLeft, FolderOpen, Trash2, Loader2, Camera, ZoomIn, CheckSquare, Square, Play } from 'lucide-react';
 import { ref, deleteObject } from 'firebase/storage';
 import { getFirebaseStorage } from '@/lib/firebase/client';
 import { Card } from '@/components/ui/Card';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 import { MediaUploader } from '@/components/admin/MediaUploader';
 import { PhotoLightbox } from '@/components/gallery/PhotoLightbox';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { getAlbumById } from '@/lib/services/albums';
 import { getMediaByAlbumId, deleteMediaItem, updateMediaItem } from '@/lib/services/media';
 import { getAllAlbums } from '@/lib/services/albums';
@@ -28,6 +29,11 @@ export default function AdminAlbumDetailPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [selectedMedia, setSelectedMedia] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<WithId<MediaItem> | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState<WithId<MediaItem> | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -48,8 +54,7 @@ export default function AdminAlbumDetailPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleDeleteMedia = async (item: WithId<MediaItem>) => {
-    if (!confirm('Delete this media item?')) return;
+  const deleteOneMedia = async (item: WithId<MediaItem>) => {
     setDeletingId(item.id);
     try {
       const storage = getFirebaseStorage();
@@ -68,6 +73,7 @@ export default function AdminAlbumDetailPage() {
       }
       await deleteMediaItem(item.id);
       setMedia(prev => prev.filter(m => m.id !== item.id));
+      setSelectedMedia(prev => { const next = new Set(prev); next.delete(item.id); return next; });
       toast.success('Media deleted.');
     } catch {
       toast.error('Failed to delete media.');
@@ -76,18 +82,49 @@ export default function AdminAlbumDetailPage() {
     }
   };
 
-  const handleRemoveFromAlbum = async (item: WithId<MediaItem>) => {
-    if (!confirm('Remove this item from the album? (The media will not be deleted)')) return;
+  const removeOneFromAlbum = async (item: WithId<MediaItem>) => {
     setDeletingId(item.id);
     try {
       await updateMediaItem(item.id, { albumId: undefined });
       setMedia(prev => prev.filter(m => m.id !== item.id));
+      setSelectedMedia(prev => { const next = new Set(prev); next.delete(item.id); return next; });
       toast.success('Removed from album.');
     } catch {
       toast.error('Failed to remove from album.');
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkDeleting(true);
+    const toDelete = media.filter(m => selectedMedia.has(m.id));
+    let deleted = 0;
+    for (const item of toDelete) {
+      try {
+        const storage = getFirebaseStorage();
+        if (storage) {
+          const urlToPath = (url: string) => {
+            try {
+              const match = url.match(/\/o\/(.+?)\?/);
+              if (match) return decodeURIComponent(match[1]);
+            } catch { /* ignore */ }
+            return null;
+          };
+          const originalPath = urlToPath(item.url);
+          const thumbPath = urlToPath(item.thumbnailUrl);
+          if (originalPath) await deleteObject(ref(storage, originalPath)).catch(() => {});
+          if (thumbPath) await deleteObject(ref(storage, thumbPath)).catch(() => {});
+        }
+        await deleteMediaItem(item.id);
+        deleted++;
+      } catch { /* continue with remaining */ }
+    }
+    setMedia(prev => prev.filter(m => !selectedMedia.has(m.id)));
+    setSelectedMedia(new Set());
+    setShowBulkDeleteConfirm(false);
+    setBulkDeleting(false);
+    toast.success(`Deleted ${deleted} media item${deleted !== 1 ? 's' : ''}.`);
   };
 
   if (loading) {
@@ -191,9 +228,39 @@ export default function AdminAlbumDetailPage() {
       </Card>
 
       {/* Media Grid */}
-      <h2 className="font-heading font-semibold text-earth-800 mb-4">
-        Media ({media.length})
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-heading font-semibold text-earth-800">
+          Media ({media.length})
+        </h2>
+        {media.length > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedMedia.size === media.length) {
+                  setSelectedMedia(new Set());
+                } else {
+                  setSelectedMedia(new Set(media.map(m => m.id)));
+                }
+              }}
+              className="text-xs px-3 py-1.5 rounded-lg border border-earth-300 hover:border-earth-400 text-earth-600 hover:text-earth-800 transition-colors flex items-center gap-1.5"
+            >
+              {selectedMedia.size === media.length ? <CheckSquare className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+              {selectedMedia.size === media.length ? 'Deselect All' : 'Select All'}
+            </button>
+            {selectedMedia.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="text-xs px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete Selected ({selectedMedia.size})
+              </button>
+            )}
+          </div>
+        )}
+      </div>
       {media.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-earth-400">
           <Camera className="h-12 w-12 mb-3" />
@@ -205,22 +272,53 @@ export default function AdminAlbumDetailPage() {
           {media.map((item, index) => (
             <div
               key={item.id}
-              className="relative group aspect-square rounded-lg overflow-hidden bg-earth-100 cursor-pointer"
+              className={`relative group aspect-square rounded-lg overflow-hidden bg-earth-100 cursor-pointer ${selectedMedia.has(item.id) ? 'ring-2 ring-gamosa-500 ring-offset-1' : ''}`}
+              onClick={() => setSelectedMedia(prev => {
+                const next = new Set(prev);
+                if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                return next;
+              })}
               onDoubleClick={() => {
                 setLightboxIndex(index);
                 setLightboxOpen(true);
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={item.thumbnailUrl || item.url}
-                alt={item.title || ''}
-                className="w-full h-full object-cover select-none"
-                loading="lazy"
-                draggable={false}
-                onContextMenu={(e) => e.preventDefault()}
-              />
+              {item.type === 'video' && !item.thumbnailUrl ? (
+                <video
+                  src={item.url}
+                  muted
+                  preload="metadata"
+                  className="w-full h-full object-cover select-none"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                  onLoadedData={(e) => { (e.target as HTMLVideoElement).currentTime = 1; }}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.thumbnailUrl || item.url}
+                  alt={item.title || ''}
+                  className="w-full h-full object-cover select-none"
+                  loading="lazy"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              )}
+              {item.type === 'video' && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center">
+                    <Play className="h-5 w-5 text-white ml-0.5" />
+                  </div>
+                </div>
+              )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors" />
+
+              {/* Selection checkbox */}
+              <div className="absolute top-1.5 left-1.5 z-10">
+                {selectedMedia.has(item.id)
+                  ? <CheckSquare className="h-5 w-5 text-gamosa-500 drop-shadow" />
+                  : <Square className="h-5 w-5 text-white/70 drop-shadow opacity-0 group-hover:opacity-100 transition-opacity" />}
+              </div>
 
               {/* Info */}
               <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
@@ -243,7 +341,7 @@ export default function AdminAlbumDetailPage() {
                   <ZoomIn className="h-3.5 w-3.5 text-white" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleRemoveFromAlbum(item); }}
+                  onClick={(e) => { e.stopPropagation(); setShowRemoveConfirm(item); }}
                   disabled={deletingId === item.id}
                   className="w-7 h-7 bg-earth-700 hover:bg-earth-800 rounded-full flex items-center justify-center"
                   title="Remove from album"
@@ -255,7 +353,7 @@ export default function AdminAlbumDetailPage() {
                   )}
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleDeleteMedia(item); }}
+                  onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(item); }}
                   disabled={deletingId === item.id}
                   className="w-7 h-7 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center"
                   title="Delete permanently"
@@ -269,7 +367,7 @@ export default function AdminAlbumDetailPage() {
               </div>
 
               {/* Badges */}
-              <div className="absolute top-1.5 left-1.5 flex gap-1">
+              <div className={`absolute ${selectedMedia.has(item.id) ? 'top-8' : 'top-1.5'} left-1.5 flex gap-1`}>
                 {!item.isPublished && (
                   <span className="bg-yellow-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
                     Draft
@@ -292,6 +390,37 @@ export default function AdminAlbumDetailPage() {
         open={lightboxOpen}
         index={lightboxIndex}
         onClose={() => setLightboxOpen(false)}
+      />
+
+      {/* Bulk delete confirmation */}
+      <ConfirmDialog
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
+        title="Delete Selected Media"
+        message={`Are you sure you want to permanently delete ${selectedMedia.size} selected item(s)? This cannot be undone.`}
+        confirmLabel="Delete"
+        isLoading={bulkDeleting}
+      />
+
+      {/* Single delete confirmation */}
+      <ConfirmDialog
+        isOpen={!!showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(null)}
+        onConfirm={() => { if (showDeleteConfirm) { deleteOneMedia(showDeleteConfirm); setShowDeleteConfirm(null); } }}
+        title="Delete Media"
+        message="Are you sure you want to permanently delete this media item? This cannot be undone."
+        confirmLabel="Delete"
+      />
+
+      {/* Remove from album confirmation */}
+      <ConfirmDialog
+        isOpen={!!showRemoveConfirm}
+        onClose={() => setShowRemoveConfirm(null)}
+        onConfirm={() => { if (showRemoveConfirm) { removeOneFromAlbum(showRemoveConfirm); setShowRemoveConfirm(null); } }}
+        title="Remove from Album"
+        message="Remove this item from the album? The media will not be deleted."
+        confirmLabel="Remove"
       />
     </div>
   );

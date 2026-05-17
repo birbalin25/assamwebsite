@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PhotoGrid } from '@/components/gallery/PhotoGrid';
 import { PhotoLightbox } from '@/components/gallery/PhotoLightbox';
+import { FilterBar } from '@/components/shared/FilterBar';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { FolderOpen } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function AlbumDetailPage() {
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [activeMediaFilter, setActiveMediaFilter] = useState('');
 
   useEffect(() => {
     async function fetchAlbum() {
@@ -146,8 +148,23 @@ export default function AlbumDetailPage() {
             </div>
           )}
 
+          {/* Media Filter */}
+          {(photos.length > 0 || videos.length > 0) && (
+            <div className="mb-8">
+              <FilterBar
+                filters={[
+                  ...(photos.length > 0 ? [{ value: 'images', label: `Images (${photos.length})` }] : []),
+                  ...(videos.length > 0 ? [{ value: 'videos', label: `Videos (${videos.length})` }] : []),
+                ]}
+                activeFilter={activeMediaFilter}
+                onFilterChange={setActiveMediaFilter}
+                allLabel="All"
+              />
+            </div>
+          )}
+
           {/* Photos */}
-          {photos.length > 0 && (
+          {photos.length > 0 && (activeMediaFilter === '' || activeMediaFilter === 'images') && (
             <div className="mb-12">
               <h2 className="text-xl font-heading font-bold text-earth-800 mb-6">
                 Photos ({photos.length})
@@ -163,7 +180,7 @@ export default function AlbumDetailPage() {
           )}
 
           {/* Videos */}
-          {videos.length > 0 && (
+          {videos.length > 0 && (activeMediaFilter === '' || activeMediaFilter === 'videos') && (
             <div className="mb-12">
               <h2 className="text-xl font-heading font-bold text-earth-800 mb-6">
                 Videos ({videos.length})

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, CheckSquare, Square, Trash2 } from 'lucide-react';
+import { VideoThumbnail } from '@/components/admin/VideoThumbnail';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -45,6 +46,12 @@ export default function EditPerformancePage() {
   const [order, setOrder] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set());
+  const [selectedVideos, setSelectedVideos] = useState<Set<number>>(new Set());
+  const [showDeleteImagesConfirm, setShowDeleteImagesConfirm] = useState(false);
+  const [showDeleteVideosConfirm, setShowDeleteVideosConfirm] = useState(false);
+  const [deleteImageIndex, setDeleteImageIndex] = useState<number | null>(null);
+  const [deleteVideoIndex, setDeleteVideoIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -204,6 +211,64 @@ export default function EditPerformancePage() {
 
         <Card>
           <h2 className="font-heading font-semibold text-earth-800 mb-4">Gallery Images</h2>
+          {galleryImages.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedImages.size === galleryImages.length) {
+                      setSelectedImages(new Set());
+                    } else {
+                      setSelectedImages(new Set(galleryImages.map((_, i) => i)));
+                    }
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-earth-300 hover:border-earth-400 text-earth-600 hover:text-earth-800 transition-colors flex items-center gap-1.5"
+                >
+                  {selectedImages.size === galleryImages.length ? <CheckSquare className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+                  {selectedImages.size === galleryImages.length ? 'Deselect All' : 'Select All'}
+                </button>
+                {selectedImages.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteImagesConfirm(true)}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete Selected ({selectedImages.size})
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-4">
+                {galleryImages.map((url, i) => (
+                  <div
+                    key={i}
+                    className={`relative group aspect-square rounded-lg overflow-hidden bg-earth-100 cursor-pointer ${selectedImages.has(i) ? 'ring-2 ring-gamosa-500 ring-offset-1' : ''}`}
+                    onClick={() => setSelectedImages(prev => {
+                      const next = new Set(prev);
+                      if (next.has(i)) next.delete(i); else next.add(i);
+                      return next;
+                    })}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute top-1 left-1">
+                      {selectedImages.has(i)
+                        ? <CheckSquare className="h-5 w-5 text-gamosa-500 drop-shadow" />
+                        : <Square className="h-5 w-5 text-white/70 drop-shadow opacity-0 group-hover:opacity-100 transition-opacity" />}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDeleteImageIndex(i); }}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <FileUploadField
             label="Add Images"
             value=""
@@ -213,24 +278,68 @@ export default function EditPerformancePage() {
             storagePath="performances/gallery"
             helperText="Select multiple images at once or drag & drop."
           />
-          {galleryImages.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {galleryImages.map((url, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-16 h-16 object-cover rounded" />
-                  <span className="text-xs text-earth-500 truncate flex-1">{url}</span>
-                  <button type="button" onClick={() => setGalleryImages(prev => prev.filter((_, j) => j !== i))}>
-                    <X className="h-4 w-4 text-red-500" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
         </Card>
 
         <Card>
           <h2 className="font-heading font-semibold text-earth-800 mb-4">Additional Videos</h2>
+          {videos.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedVideos.size === videos.length) {
+                      setSelectedVideos(new Set());
+                    } else {
+                      setSelectedVideos(new Set(videos.map((_, i) => i)));
+                    }
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-earth-300 hover:border-earth-400 text-earth-600 hover:text-earth-800 transition-colors flex items-center gap-1.5"
+                >
+                  {selectedVideos.size === videos.length ? <CheckSquare className="h-3.5 w-3.5" /> : <Square className="h-3.5 w-3.5" />}
+                  {selectedVideos.size === videos.length ? 'Deselect All' : 'Select All'}
+                </button>
+                {selectedVideos.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteVideosConfirm(true)}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete Selected ({selectedVideos.size})
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2 mb-4">
+                {videos.map((url, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-3 p-2 bg-earth-50 rounded-lg border cursor-pointer transition-colors ${selectedVideos.has(i) ? 'border-gamosa-500 ring-1 ring-gamosa-500' : 'border-earth-200'}`}
+                    onClick={() => setSelectedVideos(prev => {
+                      const next = new Set(prev);
+                      if (next.has(i)) next.delete(i); else next.add(i);
+                      return next;
+                    })}
+                  >
+                    <div className="shrink-0">
+                      {selectedVideos.has(i)
+                        ? <CheckSquare className="h-5 w-5 text-gamosa-500" />
+                        : <Square className="h-5 w-5 text-earth-300" />}
+                    </div>
+                    <VideoThumbnail url={url} />
+                    <p className="text-sm text-earth-600 truncate flex-1">{url}</p>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDeleteVideoIndex(i); }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <FileUploadField
             label="Add Videos"
             value=""
@@ -240,18 +349,6 @@ export default function EditPerformancePage() {
             storagePath="performances/extra-videos"
             helperText="Select multiple video files at once or drag & drop. You can also paste YouTube/Vimeo URLs."
           />
-          {videos.length > 0 && (
-            <div className="mt-4 space-y-2">
-              {videos.map((url, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs text-earth-500 truncate flex-1">{url}</span>
-                  <button type="button" onClick={() => setVideos(prev => prev.filter((_, j) => j !== i))}>
-                    <X className="h-4 w-4 text-red-500" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
         </Card>
 
         <Card>
@@ -274,6 +371,60 @@ export default function EditPerformancePage() {
         message="Are you sure you want to update this performance?"
         confirmLabel="Update"
         confirmVariant="primary"
+      />
+      <ConfirmDialog
+        isOpen={showDeleteImagesConfirm}
+        onClose={() => setShowDeleteImagesConfirm(false)}
+        onConfirm={() => {
+          setGalleryImages(prev => prev.filter((_, i) => !selectedImages.has(i)));
+          setSelectedImages(new Set());
+          setShowDeleteImagesConfirm(false);
+        }}
+        title="Delete Selected Images"
+        message={`Are you sure you want to delete ${selectedImages.size} selected image(s)? This cannot be undone.`}
+        confirmLabel="Delete"
+      />
+      <ConfirmDialog
+        isOpen={showDeleteVideosConfirm}
+        onClose={() => setShowDeleteVideosConfirm(false)}
+        onConfirm={() => {
+          setVideos(prev => prev.filter((_, i) => !selectedVideos.has(i)));
+          setSelectedVideos(new Set());
+          setShowDeleteVideosConfirm(false);
+        }}
+        title="Delete Selected Videos"
+        message={`Are you sure you want to delete ${selectedVideos.size} selected video(s)? This cannot be undone.`}
+        confirmLabel="Delete"
+      />
+      <ConfirmDialog
+        isOpen={deleteImageIndex !== null}
+        onClose={() => setDeleteImageIndex(null)}
+        onConfirm={() => {
+          if (deleteImageIndex !== null) {
+            const i = deleteImageIndex;
+            setGalleryImages(prev => prev.filter((_, j) => j !== i));
+            setSelectedImages(prev => { const next = new Set<number>(); prev.forEach(idx => { if (idx < i) next.add(idx); else if (idx > i) next.add(idx - 1); }); return next; });
+            setDeleteImageIndex(null);
+          }
+        }}
+        title="Delete Image"
+        message="Are you sure you want to delete this image? This cannot be undone."
+        confirmLabel="Delete"
+      />
+      <ConfirmDialog
+        isOpen={deleteVideoIndex !== null}
+        onClose={() => setDeleteVideoIndex(null)}
+        onConfirm={() => {
+          if (deleteVideoIndex !== null) {
+            const i = deleteVideoIndex;
+            setVideos(prev => prev.filter((_, j) => j !== i));
+            setSelectedVideos(prev => { const next = new Set<number>(); prev.forEach(idx => { if (idx < i) next.add(idx); else if (idx > i) next.add(idx - 1); }); return next; });
+            setDeleteVideoIndex(null);
+          }
+        }}
+        title="Delete Video"
+        message="Are you sure you want to delete this video? This cannot be undone."
+        confirmLabel="Delete"
       />
     </div>
   );

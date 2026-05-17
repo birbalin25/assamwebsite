@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Pencil, Trash2, FolderOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, FolderOpen, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -44,6 +44,7 @@ export default function AdminAlbumsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<AlbumFormData>(emptyForm);
+  const [filterYear, setFilterYear] = useState('');
 
   const fetchAlbums = async () => {
     try {
@@ -240,6 +241,29 @@ export default function AdminAlbumsPage() {
         </Card>
       )}
 
+      {/* Year Filter */}
+      {albums.length > 0 && (() => {
+        const yearOpts = [...new Set(albums.map(a => a.year).filter((y): y is number => !!y))].sort((a, b) => b - a);
+        return yearOpts.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="flex items-center gap-1.5 text-sm text-earth-500">
+              <Filter className="h-4 w-4" />
+              <span className="font-medium">Filter</span>
+            </div>
+            <select value={filterYear} onChange={e => setFilterYear(e.target.value)} className="text-sm rounded-lg border border-earth-300 px-3 py-1.5 text-earth-700 bg-white focus:outline-none focus:ring-2 focus:ring-gamosa-500/20 focus:border-gamosa-500">
+              <option value="">All Years</option>
+              {yearOpts.map(y => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
+            {filterYear && (
+              <button onClick={() => setFilterYear('')} className="text-xs px-2.5 py-1.5 rounded-lg text-earth-500 hover:text-earth-700 hover:bg-earth-100 transition-colors flex items-center gap-1">
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </button>
+            )}
+          </div>
+        ) : null;
+      })()}
+
       {/* Albums List */}
       {albums.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-earth-400">
@@ -249,7 +273,7 @@ export default function AdminAlbumsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {albums.map((album) => (
+          {albums.filter(a => !filterYear || a.year === Number(filterYear)).map((album) => (
             <Card key={album.id} padding="none" className="flex items-center gap-4 p-4">
               {/* Thumbnail */}
               <div className="w-16 h-16 rounded-lg bg-earth-100 overflow-hidden shrink-0">
