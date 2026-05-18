@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Playfair_Display } from 'next/font/google';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { ToastProvider } from '@/providers/ToastProvider';
+import { JsonLd } from '@/components/shared/JsonLd';
 import { siteConfig } from '@/lib/constants/seo';
 import './globals.css';
 
@@ -55,6 +56,16 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-body">
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: siteConfig.name,
+            url: siteConfig.url,
+            description: siteConfig.description,
+            email: siteConfig.contactEmail,
+          }}
+        />
         <AuthProvider>
           {children}
           <ToastProvider />
