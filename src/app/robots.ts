@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin/', '/api/'],
       },
     ],
-    sitemap: 'https://assamesecommunityusa.org/sitemap.xml',
+    sitemap: 'https://assamindallas.org/sitemap.xml',
   };
 }

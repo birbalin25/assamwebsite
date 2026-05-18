@@ -3,7 +3,7 @@ export const siteConfig = {
   shortName: 'AiD',
   description: 'Connecting cultures, celebrating heritage, and building community. Proudly promoting the rich traditions and vibrant spirit of Assam and North East India in Dallas, USA.',
   url: 'https://assamindallas.org',
-  ogImage: '/images/og-default.jpg',
+  ogImage: '/api/og',
   contactEmail: 'info@assameseassociationofdallas.org',
   keywords: [
     'Assamese community',
@@ -19,23 +19,39 @@ export const siteConfig = {
   ],
 };
 
-export function generatePageMeta(title: string, description?: string) {
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+export function truncate(text: string, maxLength = 160): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength).replace(/\s+\S*$/, '') + '...';
+}
+
+export function generatePageMeta(
+  title: string,
+  description?: string,
+  options?: { url?: string; image?: string }
+) {
+  const desc = description || siteConfig.description;
+  const url = options?.url || siteConfig.url;
+  const image = options?.image || siteConfig.ogImage;
   return {
-    title: `${title} | ${siteConfig.name}`,
-    description: description || siteConfig.description,
+    title,
+    description: desc,
     openGraph: {
       title: `${title} | ${siteConfig.name}`,
-      description: description || siteConfig.description,
-      url: siteConfig.url,
+      description: desc,
+      url,
       siteName: siteConfig.name,
-      images: [{ url: siteConfig.ogImage, width: 1200, height: 630 }],
+      images: [{ url: image, width: 1200, height: 630 }],
       locale: 'en_US',
-      type: 'website',
+      type: 'website' as const,
     },
     twitter: {
       card: 'summary_large_image' as const,
       title: `${title} | ${siteConfig.name}`,
-      description: description || siteConfig.description,
+      description: desc,
     },
   };
 }

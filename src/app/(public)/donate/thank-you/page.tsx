@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Heart, ArrowRight, Share2 } from 'lucide-react';
+import { generatePageMeta } from '@/lib/constants/seo';
 
-export const metadata = {
-  title: 'Thank You',
-  description: 'Thank you for your generous donation to the Assamese Community USA.',
-};
+export const metadata = generatePageMeta(
+  'Thank You',
+  'Thank you for your generous donation to the Assamese community in Dallas.'
+);
 
 export default function ThankYouPage() {
   return (
