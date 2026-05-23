@@ -67,7 +67,7 @@ A complete guide for administrators to install, configure, deploy, and maintain 
 
 2. Clone the repository:
    ```bash
-   git clone https://github.com/birbalin25/assamwebsite.git
+   git clone https://github.com/dfwassamese/assamwebsite.git
    ```
 
 3. Navigate into the project:
@@ -523,7 +523,7 @@ vercel --prod
 
 1. Clone and install (if not already done):
    ```bash
-   git clone https://github.com/birbalin25/assamwebsite.git
+   git clone https://github.com/dfwassamese/assamwebsite.git
    cd assamwebsite
    npm install
    ```

@@ -77,7 +77,7 @@ export interface SiteConfig {
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
   siteName: 'Assam in Dallas, USA',
   siteTagline: 'Connecting cultures, celebrating heritage, and building community.',
-  contactEmail: 'info@assameseassociationofdallas.org',
+  contactEmail: 'dfwassamese@gmail.com',
   statMembers: 500,
   statEvents: 50,
   statPerformances: 200,
@@ -93,7 +93,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   donationsEnabled: true,
   donationGoal: 10000,
   donationMessage: 'Your generous donation helps us preserve Assamese culture and organize community events across the USA.',
-  contactFormRecipient: 'vijay.in09@gmail.com',
+  contactFormRecipient: 'dfwassamese@gmail.com',
   contactFormEnabled: true,
   aboutTitle: 'About Us',
   aboutDescription: 'Preserving Assamese heritage and building community across America.',

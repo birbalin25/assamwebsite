@@ -22,7 +22,7 @@ export default function EmailConfigPage() {
     async function loadConfig() {
       try {
         const config = await getSiteConfig();
-        setRecipientEmail(config.contactFormRecipient || 'vijay.in09@gmail.com');
+        setRecipientEmail(config.contactFormRecipient || 'dfwassamese@gmail.com');
         setResendApiKey(config.resendApiKey || '');
         setContactFormEnabled(config.contactFormEnabled !== false);
       } catch {
@@ -38,7 +38,7 @@ export default function EmailConfigPage() {
     setSaving(true);
     try {
       const updates: Partial<SiteConfig> = {
-        contactFormRecipient: recipientEmail.trim() || 'vijay.in09@gmail.com',
+        contactFormRecipient: recipientEmail.trim() || 'dfwassamese@gmail.com',
         contactFormEnabled,
       };
       if (resendApiKey.trim()) {
@@ -108,8 +108,8 @@ export default function EmailConfigPage() {
             type="email"
             value={recipientEmail}
             onChange={(e) => setRecipientEmail(e.target.value)}
-            placeholder="vijay.in09@gmail.com"
-            helperText="Default: vijay.in09@gmail.com"
+            placeholder="dfwassamese@gmail.com"
+            helperText="Default: dfwassamese@gmail.com"
           />
         </Card>
 

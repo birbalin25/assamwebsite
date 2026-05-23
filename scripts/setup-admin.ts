@@ -1,6 +1,15 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
+const email = process.argv[2];
+const password = process.argv[3];
+
+if (!email || !password) {
+  console.error('Usage: npx tsx scripts/setup-admin.ts <email> <password>');
+  console.error('Example: npx tsx scripts/setup-admin.ts admin@example.com MySecurePass123');
+  process.exit(1);
+}
+
 const serviceAccount = require('/tmp/firebase-admin-key.json');
 
 const app = initializeApp({
@@ -10,9 +19,6 @@ const app = initializeApp({
 const auth = getAuth(app);
 
 async function setupAdmin() {
-  const email = 'birbal.in@gmail.com';
-  const password = 'Assam@Dallas2026';
-
   try {
     // Try to get existing user
     let user;
@@ -35,7 +41,6 @@ async function setupAdmin() {
     console.log('\nAdmin setup complete!');
     console.log('Login at: /admin/login');
     console.log('Email:', email);
-    console.log('Password:', password);
   } catch (error) {
     console.error('Error:', error);
   }
