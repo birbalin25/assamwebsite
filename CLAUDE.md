@@ -9,8 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev          # Start dev server at localhost:3000
 npm run build        # Production build (Turbopack)
+npm run start        # Serve production build locally
 npm run lint         # ESLint v9
-vercel --prod        # Deploy to production from local
+vercel --prod        # Deploy to production (https://assamindallas.org)
 ```
 
 No test framework is configured. Playwright is a devDependency but has no test scripts.
@@ -37,7 +38,7 @@ src/app/(public)/events/EventsPageClient.tsx → 'use client' component with sta
 
 - `page.tsx` calls `generatePageMeta()` from `src/lib/constants/seo.ts` for static metadata, or `generateMetadata()` for dynamic pages that fetch from Firestore via Admin SDK.
 - `*Client.tsx` contains the original page UI with `'use client'`, `useState`, `useEffect`, etc.
-- Detail pages (e.g., `events/[year]/[eventSlug]/page.tsx`) use `generateMetadata()` with async params (`params: Promise<{ ... }>` — Next.js 16 API).
+- **Next.js 16 breaking change**: Dynamic route params are now async. Detail pages (e.g., `events/[year]/[eventSlug]/page.tsx`) must declare `params: Promise<{ ... }>` and `await` them. This applies to both `generateMetadata()` and page components.
 
 ### Data Layer
 
@@ -73,17 +74,24 @@ Firebase Storage for all uploaded images/videos. `next.config.ts` allows remote 
 
 ### Tailwind CSS v4
 
-Uses the new `@theme inline` directive in `src/app/globals.css` — not a `tailwind.config.ts` file. Custom color palettes: `gamosa` (red), `muga` (gold), `tea` (green), `earth` (brown neutrals). Custom font families: `font-heading` (Playfair Display), `font-body` (Inter), `font-assamese` (Noto Sans Assamese).
+Uses the new `@theme inline` directive in `src/app/globals.css` — not a `tailwind.config.ts` file. Custom color palettes: `gamosa` (red), `muga` (gold), `tea` (green), `earth` (brown neutrals). Custom font families: `font-heading` (Playfair Display), `font-body` (Inter), `font-assamese` (Noto Sans Assamese). Custom utility classes: `.gamosa-border` (traditional pattern border), `.muga-texture` (silk texture overlay), `.glass` (glassmorphism effect).
 
 ### Component Organization
 
 - `src/components/ui/` — Custom component library (Button, Card, Input, Modal, Select, Badge, etc.). Not shadcn.
-- `src/components/admin/` — Admin-specific components (DataTable, RichTextEditor via TipTap, FileUploadField, MediaUploader, AdminAuthGuard)
-- `src/components/home/` — Homepage sections (HeroSection, FeaturedEvents, QuickStats, etc.)
-- `src/components/home/animations/` — 7 homepage animation effects (FlyingBirds, FloatingLanterns, Fireflies, FallingTeaLeaves, FlowingRiver, ConfettiBurst, TwinklingStars), orchestrated by `HomepageAnimation` wrapper. Config-driven via `siteConfig.homepageAnimation`.
+- `src/components/admin/` — Admin-specific: DataTable, RichTextEditor (TipTap), FileUploadField, MediaUploader, AdminAuthGuard
+- `src/components/home/` — Homepage sections and `animations/` subfolder with 7 config-driven animation effects orchestrated by `HomepageAnimation` (controlled via `siteConfig.homepageAnimation`)
 - `src/components/layout/` — Header, Footer, Sidebar
-- `src/components/shared/` — Cross-cutting: AnimatedSection, FilterBar, JsonLd, OptimizedImage, SearchBar, SiteLogo, BackButton
+- `src/components/shared/` — Cross-cutting: AnimatedSection, FilterBar, JsonLd, OptimizedImage, SearchBar, BackButton
 - Domain-specific folders: `events/`, `gallery/`, `community/`, `artists/`, `performances/`, `donate/`, `contact/`
+
+### Key Libraries
+
+- **framer-motion** — Page transitions, scroll animations (`AnimatedSection`), homepage effects
+- **Swiper** — Image/video carousels in gallery and event pages
+- **react-hook-form + Zod** — All forms use react-hook-form with Zod validation schemas from `src/lib/utils/validation.ts`
+- **TipTap** — Rich text editor in admin panel (`src/components/admin/RichTextEditor.tsx`)
+- **date-fns** — Date formatting via `src/lib/utils/dates.ts`
 
 ### Types
 

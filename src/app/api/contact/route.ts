@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const { Resend } = await import('resend');
     const resend = new Resend(apiKey);
 
-    const to = recipientEmail || process.env.CONTACT_EMAIL || 'vijay.in09@gmail.com';
+    const to = recipientEmail || process.env.CONTACT_EMAIL || 'dfwassamese@gmail.com';
 
     await resend.emails.send({
       from: 'Contact Form <onboarding@resend.dev>',
